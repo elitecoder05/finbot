@@ -1,12 +1,12 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db/client'
 import { requireSession } from '@/lib/auth'
 import { isApprovalAllowed } from '@/lib/rbac'
 
-export async function POST(request: Request, { params }: { params: { id: string } }) {
+export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await requireSession()
-    const { id } = params
+    const { id } = await params
 
     const body = await request.json().catch(() => ({}))
     const { action, comment } = body as { action?: string; comment?: string }

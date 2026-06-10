@@ -27,7 +27,7 @@ export async function withRetry<T>(
       if (attempt === maxRetries) break
 
       const status = (error as { status?: number })?.status
-      const shouldRetry = retryableStatuses.includes(status)
+      const shouldRetry = typeof status === 'number' && retryableStatuses.includes(status)
 
       if (!shouldRetry) {
         throw lastError
