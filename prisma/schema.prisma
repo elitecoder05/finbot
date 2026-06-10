@@ -1,0 +1,123 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id              String        @id @default(cuid())
+  username        String        @unique
+  passwordHash    String
+  role            UserRole      @default(me)
+  name            String
+  email           String?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  createdTransactions     Transaction[] @relation("CreatedTransactions")
+  approvedTransactions    Transaction[] @relation("ApprovedTransactions")
+  approvalsGiven          Approval[]
+  auditLogs               AuditLog[]
+}
+
+enum UserRole {
+  father
+  brother
+  me
+}
+
+model Transaction {
+  id                String   @id @default(cuid())
+  transactionType   String
+  amount            Float
+  product           String?
+  vendor            String?
+  customer          String?
+  quantity          Float?
+  unit              String?
+  paymentDirection  String
+  category          String?
+  notes             String?
+  date              DateTime
+  confidence        Float
+  status            String   @default("pending")
+
+  createdById String
+  createdBy   User   @relation("CreatedTransactions", fields: [createdById], references: [id])
+
+  approvedById String?
+  approvedBy   User?   @relation("ApprovedTransactions", fields: [approvedById], references: [id])
+  approvedAt   DateTime?
+
+  approvals Approval[]
+  isRejected Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([createdById])
+  @@index([status])
+  @@index([date])
+}
+
+model Approval {
+  id          String   @id @default(cuid())
+  transaction   Transaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+  transactionId String
+  approverId  String
+  approver    User    @relation(fields: [approverId], references: [id])
+  action      String
+  comment     String?
+  createdAt   DateTime @default(now())
+
+  @@index([transactionId])
+}
+
+model Party {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  type      String
+  createdAt DateTime @default(now())
+}
+
+model Product {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  createdAt DateTime @default(now())
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  action    String
+  entity    String
+  entityId  String?
+  details   String?
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+
+model AIExtraction {
+  id          String   @id @default(cuid())
+  input       String
+  output      String
+  regexResult String?
+  ruleResult  String?
+  confidence  Float
+  isValidated Boolean  @default(false)
+  validation  String?
+  createdAt   DateTime @default(now())
+}
+
+model AppSettings {
+  id                   String   @id @default("singleton")
+  geminiApiKey         String?
+  modelName            String   @default("gemini-2.0-flash")
+  temperature          Float    @default(0.1)
+  confidenceThreshold  Float    @default(0.7)
+}
