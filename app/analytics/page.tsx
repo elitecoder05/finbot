@@ -158,7 +158,7 @@ export default function AnalyticsPage() {
 
   if (authLoading) {
     return (
-      <div className="flex min-h-screen flex-col">
+      <div className="flex min-h-screen flex-col" style={{ backgroundColor: '#111B21' }}>
         <TopBar />
         <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-4 px-4 py-6">
           <p className="text-sm text-zinc-500">Loading...</p>
@@ -173,7 +173,7 @@ export default function AnalyticsPage() {
   const totalTransactions = data?.typeSummary?.reduce((sum, item) => sum + item._count._all, 0) || 0
 
   return (
-    <div className="flex min-h-screen flex-col">
+    <div className="flex min-h-screen flex-col" style={{ backgroundColor: '#111B21' }}>
       <TopBar />
       <div className="flex flex-1">
         <Sidebar />

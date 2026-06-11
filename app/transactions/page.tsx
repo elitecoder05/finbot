@@ -36,7 +36,7 @@ export default function TransactionsPage() {
 
   if (authLoading) {
     return (
-      <div className="flex min-h-screen flex-col">
+      <div className="flex min-h-screen flex-col" style={{ backgroundColor: '#111B21' }}>
         <TopBar />
         <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-4 px-4 py-6">
           <p className="text-sm text-zinc-500">Loading...</p>
@@ -48,7 +48,7 @@ export default function TransactionsPage() {
   if (!user) return null
 
   return (
-    <div className="flex min-h-screen flex-col">
+    <div className="flex min-h-screen flex-col" style={{ backgroundColor: '#111B21' }}>
       <TopBar />
       <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-4 px-4 py-6">
         <div className="flex flex-col gap-1">

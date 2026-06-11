@@ -144,9 +144,9 @@ export function ExtractionCard({
   }
 
   return (
-    <div className="mt-2 max-w-2xl rounded-2xl border border-zinc-200 bg-white px-4 py-3 dark:border-zinc-800 dark:bg-zinc-950">
+    <div className="px-3 pt-3 pb-1">
       <div className="mb-2 flex items-center justify-between">
-        <span className="text-xs font-medium text-zinc-500">Detected Transaction</span>
+        <span className="text-xs font-semibold" style={{ color: '#25D366' }}>🧾 Detected Transaction</span>
         <span className="text-xs text-zinc-400">
           {(confidence ?? extraction.confidence ?? 0) > 0 ? `${((confidence ?? extraction.confidence ?? 0) * 100).toFixed(0)}% confidence` : ''}
         </span>
@@ -301,14 +301,15 @@ export function ExtractionCard({
         </Field>
       </div>
 
-      <div className="mt-3 flex flex-wrap items-center gap-2">
+      <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-zinc-100 pt-2">
         {isEditing ? (
           <>
             <button
               type="button"
               onClick={handleConfirm}
               disabled={isSaving}
-              className="rounded-xl bg-zinc-900 px-4 py-2 text-sm text-white disabled:opacity-60 dark:bg-zinc-100 dark:text-zinc-900"
+              className="rounded-full px-4 py-1.5 text-sm font-medium text-white disabled:opacity-60"
+              style={{ backgroundColor: '#25D366' }}
             >
               {isSaving ? 'Saving...' : 'Save'}
             </button>
@@ -318,7 +319,7 @@ export function ExtractionCard({
                 setIsEditing(false)
                 setEdited(extraction)
               }}
-              className="rounded-xl border border-zinc-300 px-4 py-2 text-sm text-zinc-700 dark:border-zinc-700 dark:text-zinc-300"
+              className="rounded-full border border-zinc-300 px-4 py-1.5 text-sm text-zinc-600"
             >
               Cancel
             </button>
@@ -329,15 +330,16 @@ export function ExtractionCard({
               type="button"
               onClick={handleConfirm}
               disabled={isSaving}
-              className="rounded-xl bg-zinc-900 px-4 py-2 text-sm text-white disabled:opacity-60 dark:bg-zinc-100 dark:text-zinc-900"
+              className="rounded-full px-4 py-1.5 text-sm font-medium text-white disabled:opacity-60"
+              style={{ backgroundColor: '#25D366' }}
             >
-              Save Transaction
+              {isSaving ? 'Saving...' : '✓ Save Transaction'}
             </button>
             {requiresConfirmation && (
               <button
                 type="button"
                 onClick={() => setIsEditing(true)}
-                className="rounded-xl border border-zinc-300 px-4 py-2 text-sm text-zinc-700 dark:border-zinc-700 dark:text-zinc-300"
+                className="rounded-full border border-zinc-300 px-4 py-1.5 text-sm text-zinc-600"
               >
                 Edit
               </button>
@@ -346,7 +348,7 @@ export function ExtractionCard({
               <button
                 type="button"
                 onClick={onCancel}
-                className="rounded-xl px-4 py-2 text-sm text-red-600 dark:text-red-400"
+                className="rounded-full px-4 py-1.5 text-sm text-red-500"
               >
                 Discard
               </button>

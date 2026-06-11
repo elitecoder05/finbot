@@ -1,32 +1,52 @@
 'use client'
 
 import { useCallback, useState } from 'react'
-import { usePathname, useRouter } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import { useAuth } from '@/components/providers/auth'
 import { UserRole } from '@/types'
+import { MoreVertical, MessageSquare, Clock, BarChart2, CheckSquare, LogOut, ChevronRight } from 'lucide-react'
 
-const USERS: { role: UserRole; label: string }[] = [
-  { role: 'father', label: 'Father' },
-  { role: 'brother', label: 'Brother' },
-  { role: 'me', label: 'Me' },
+const USERS: { role: UserRole; label: string; initials: string }[] = [
+  { role: 'father', label: 'Father', initials: 'FA' },
+  { role: 'brother', label: 'Brother', initials: 'BR' },
+  { role: 'me', label: 'Me', initials: 'ME' },
 ]
 
 const NAV_ITEMS = [
-  { href: '/dashboard', label: 'Chat' },
-  { href: '/approvals', label: 'Pending Approvals' },
-  { href: '/transactions', label: 'History' },
-  { href: '/analytics', label: 'Analytics' },
+  { href: '/dashboard', label: 'Chat', icon: MessageSquare },
+  { href: '/approvals', label: 'Pending Approvals', icon: CheckSquare },
+  { href: '/transactions', label: 'History', icon: Clock },
+  { href: '/analytics', label: 'Analytics', icon: BarChart2 },
 ]
+
+function roleInitials(name: string) {
+  return name
+    .split(' ')
+    .map((w) => w[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2)
+}
+
+function roleColor(role: string) {
+  const colors: Record<string, string> = {
+    father: '#5B8DEF',
+    brother: '#25D366',
+    me: '#FF6B35',
+  }
+  return colors[role] ?? '#128C7E'
+}
 
 export function TopBar() {
   const { user, refresh, logout } = useAuth()
-  const pathname = usePathname()
   const router = useRouter()
   const [open, setOpen] = useState(false)
+  const [switcherOpen, setSwitcherOpen] = useState(false)
 
   const handleRoleSwitch = useCallback(
     async (role: UserRole) => {
       setOpen(false)
+      setSwitcherOpen(false)
       try {
         await fetch('/api/auth/switch', {
           method: 'POST',
@@ -46,79 +66,133 @@ export function TopBar() {
     await logout()
   }, [logout])
 
+  const navigate = (href: string) => {
+    setOpen(false)
+    router.push(href)
+  }
+
   if (!user) return null
 
   return (
-    <header className="sticky top-0 z-40 border-b border-zinc-200 bg-white/80 backdrop-blur dark:border-zinc-800 dark:bg-zinc-950/70">
-      <div className="mx-auto max-w-6xl flex h-14 items-center justify-between px-4">
-        <div className="flex items-center gap-6">
-          <span className="text-sm font-semibold tracking-tight">Family Finance Recorder</span>
-          <nav className="hidden gap-1 md:flex">
-            {NAV_ITEMS.map((item) => {
-              const active = pathname === item.href || pathname.startsWith(`${item.href}/`)
-              return (
-                <button
-                  key={item.href}
-                  type="button"
-                  onClick={() => router.push(item.href)}
-                  className={`rounded-lg px-3 py-1.5 text-sm ${
-                    active ? 'bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900' : 'text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800'
-                  }`}
-                >
-                  {item.label}
-                </button>
-              )
-            })}
-          </nav>
+    <header className="sticky top-0 z-50" style={{ backgroundColor: '#075E54' }}>
+      <div className="flex h-14 items-center justify-between px-4">
+        {/* Left: Avatar + Name */}
+        <div className="flex items-center gap-3">
+          <div
+            className="flex h-9 w-9 items-center justify-center rounded-full text-xs font-bold text-white select-none"
+            style={{ backgroundColor: roleColor(user.role) }}
+          >
+            {roleInitials(user.name)}
+          </div>
+          <div className="flex flex-col leading-tight">
+            <span className="text-sm font-semibold text-white">Family Finance</span>
+            <span className="text-xs" style={{ color: '#9EEDE6' }}>
+              {user.name} · {user.role}
+            </span>
+          </div>
         </div>
 
-        <div className="relative flex items-center gap-3 text-sm">
-          <span className="hidden sm:inline-flex items-center gap-1 rounded-full border border-zinc-200 px-2 py-1 dark:border-zinc-800">
-            <span className="h-2 w-2 rounded-full bg-lime-500" />
-            {user.name}
-          </span>
-          <span className="rounded-full border border-zinc-200 px-2 py-1 dark:border-zinc-800 capitalize">{user.role}</span>
+        {/* Right: Options */}
+        <div className="relative">
+          <button
+            type="button"
+            onClick={() => { setOpen((v) => !v); setSwitcherOpen(false) }}
+            className="flex h-9 w-9 items-center justify-center rounded-full transition-colors hover:bg-white/10"
+            aria-label="Options"
+          >
+            <MoreVertical size={20} className="text-white" />
+          </button>
 
-          <div className="relative">
-            <button
-              type="button"
-              onClick={() => setOpen((v) => !v)}
-              className="inline-flex items-center justify-center rounded-lg border border-zinc-300 px-2 py-1 text-xs dark:border-zinc-700"
-            >
-              User
-            </button>
-            {open ? (
-              <div className="absolute right-0 mt-2 w-48 overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-                <div className="border-b border-zinc-100 px-3 py-2 dark:border-zinc-800">
-                  <p className="text-xs text-zinc-500">Switch user</p>
-                </div>
-                {USERS.map((u) => (
+          {open && (
+            <>
+              {/* Backdrop */}
+              <div className="fixed inset-0 z-40" onClick={() => { setOpen(false); setSwitcherOpen(false) }} />
+
+              <div
+                className="absolute right-0 top-11 z-50 w-52 overflow-hidden rounded-lg shadow-xl"
+                style={{ backgroundColor: '#233138' }}
+              >
+                {/* Navigation items */}
+                {NAV_ITEMS.map((item) => {
+                  const Icon = item.icon
+                  return (
+                    <button
+                      key={item.href}
+                      type="button"
+                      onClick={() => navigate(item.href)}
+                      className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm text-white transition-colors hover:bg-white/10"
+                    >
+                      <Icon size={16} className="shrink-0" style={{ color: '#9EEDE6' }} />
+                      {item.label}
+                    </button>
+                  )
+                })}
+
+                {/* Divider */}
+                <div className="my-1 border-t border-white/10" />
+
+                {/* Switch User */}
+                <div className="relative">
                   <button
-                    key={u.role}
                     type="button"
-                    onClick={() => handleRoleSwitch(u.role)}
-                    className={`flex w-full items-center px-3 py-2 text-left text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800 ${
-                      user.role === u.role ? 'font-medium' : ''
-                    }`}
+                    onClick={() => setSwitcherOpen((v) => !v)}
+                    className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left text-sm text-white transition-colors hover:bg-white/10"
                   >
-                    {u.label}
-                    {user.role === u.role ? (
-                      <span className="ml-auto text-xs text-zinc-400">current</span>
-                    ) : null}
+                    <div className="flex items-center gap-3">
+                      <div
+                        className="flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-bold text-white"
+                        style={{ backgroundColor: roleColor(user.role) }}
+                      >
+                        {roleInitials(user.name)}
+                      </div>
+                      Switch User
+                    </div>
+                    <ChevronRight size={14} style={{ color: '#9EEDE6' }} />
                   </button>
-                ))}
-                <div className="border-t border-zinc-100 dark:border-zinc-800">
+
+                  {switcherOpen && (
+                    <div
+                      className="absolute right-full top-0 mr-1 w-40 overflow-hidden rounded-lg shadow-xl"
+                      style={{ backgroundColor: '#233138' }}
+                    >
+                      {USERS.map((u) => (
+                        <button
+                          key={u.role}
+                          type="button"
+                          onClick={() => handleRoleSwitch(u.role)}
+                          className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm text-white transition-colors hover:bg-white/10"
+                        >
+                          <div
+                            className="flex h-6 w-6 items-center justify-center rounded-full text-[10px] font-bold text-white shrink-0"
+                            style={{ backgroundColor: roleColor(u.role) }}
+                          >
+                            {u.initials}
+                          </div>
+                          <span className="flex-1">{u.label}</span>
+                          {user.role === u.role && (
+                            <span style={{ color: '#25D366', fontSize: 10 }}>✓</span>
+                          )}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Logout */}
+                <div className="border-t border-white/10">
                   <button
                     type="button"
                     onClick={handleLogout}
-                    className="flex w-full items-center px-3 py-2 text-left text-sm text-red-600 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                    className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm transition-colors hover:bg-white/10"
+                    style={{ color: '#FF6B6B' }}
                   >
+                    <LogOut size={16} className="shrink-0" />
                     Logout
                   </button>
                 </div>
               </div>
-            ) : null}
-          </div>
+            </>
+          )}
         </div>
       </div>
     </header>

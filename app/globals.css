@@ -127,4 +127,13 @@
   html {
     @apply font-sans;
   }
+  textarea::placeholder {
+    color: #8696A0;
+  }
+  input::placeholder {
+    color: #8696A0;
+  }
+  /* Custom bounce animation delay support */
+  .animation-delay-150 { animation-delay: 0.15s; }
+  .animation-delay-300 { animation-delay: 0.3s; }
 }
