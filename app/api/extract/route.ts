@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server'
 import { extractTransaction } from '@/lib/extraction'
 import { requireSession } from '@/lib/auth'
-import { prisma } from '@/lib/db/client'
 
 export async function POST(request: Request) {
   try {
@@ -13,13 +12,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Input text is required' }, { status: 400 })
     }
 
-    const settings = await prisma.appSettings.findUnique({ where: { id: 'singleton' } })
-
-    const result = await extractTransaction(text, {
-      geminiApiKey: settings?.geminiApiKey || undefined,
-      modelName: settings?.modelName || 'gemini-2.0-flash',
-      temperature: settings?.temperature ?? 0.1,
-    })
+    const result = await extractTransaction(text)
 
     if (!result.success) {
       return NextResponse.json(
@@ -37,6 +30,7 @@ export async function POST(request: Request) {
         errors: result.validation?.errors ?? [],
         confidence: result.validation?.confidence ?? result.extraction?.confidence ?? 0,
       },
+      modelUsed: process.env.AI_MODEL || 'gemini-2.0-flash',
     })
   } catch (error) {
     console.error('/api/extract error:', error)

@@ -78,7 +78,7 @@ export function validateExtraction(
     warnings.push('Regex detected quantity but final result has none.')
   }
 
-  const confidenceThreshold = 0.7
+  const confidenceThreshold = parseFloat(process.env.AI_CONFIDENCE_THRESHOLD || '0.7')
   if (geminiResult.confidence < confidenceThreshold) {
     result.requiresUserConfirmation = true
     warnings.push(`Confidence ${(geminiResult.confidence * 100).toFixed(0)}% is below threshold (${(confidenceThreshold * 100).toFixed(0)}%). User confirmation required.`)

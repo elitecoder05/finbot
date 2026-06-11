@@ -42,16 +42,6 @@ async function main() {
     },
   })
 
-  await prisma.appSettings.upsert({
-    where: { id: 'singleton' },
-    update: {},
-    create: {
-      id: 'singleton',
-      modelName: 'gemini-2.0-flash',
-      temperature: 0.1,
-      confidenceThreshold: 0.7,
-    },
-  })
 }
 
 main()

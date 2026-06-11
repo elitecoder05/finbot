@@ -114,10 +114,4 @@ model AIExtraction {
   createdAt   DateTime @default(now())
 }
 
-model AppSettings {
-  id                   String   @id @default("singleton")
-  geminiApiKey         String?
-  modelName            String   @default("gemini-2.0-flash")
-  temperature          Float    @default(0.1)
-  confidenceThreshold  Float    @default(0.7)
-}
+

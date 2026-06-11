@@ -80,12 +80,12 @@ async function callGeminiDirect(prompt: string, apiKey: string, modelName: strin
 
 export async function extractWithGemini(
   input: GeminiExtractionInput,
-  options?: { apiKey?: string; modelName?: string; temperature?: number }
+  options?: { apiKey?: string }
 ): Promise<GeminiExtractionOutput> {
   const { rawText, regexResult, ruleResult, knownProducts, knownParties } = input
   const apiKey = options?.apiKey || process.env.GEMINI_API_KEY
-  const modelName = options?.modelName || 'gemini-2.0-flash'
-  const temperature = options?.temperature ?? 0.1
+  const modelName = process.env.AI_MODEL || 'gemini-2.0-flash'
+  const temperature = parseFloat(process.env.AI_TEMPERATURE || '0.1')
 
   if (!apiKey) {
     throw new Error('GEMINI_API_KEY is not configured')

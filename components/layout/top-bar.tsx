@@ -16,7 +16,6 @@ const NAV_ITEMS = [
   { href: '/approvals', label: 'Pending Approvals' },
   { href: '/transactions', label: 'History' },
   { href: '/analytics', label: 'Analytics' },
-  { href: '/settings', label: 'AI Settings' },
 ]
 
 export function TopBar() {

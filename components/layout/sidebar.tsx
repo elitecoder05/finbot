@@ -8,7 +8,6 @@ const NAV_ITEMS = [
   { href: '/approvals', label: 'Pending Approvals', icon: '⏳' },
   { href: '/transactions', label: 'History', icon: '📋' },
   { href: '/analytics', label: 'Analytics', icon: '📊' },
-  { href: '/settings', label: 'AI Settings', icon: '⚙️' },
 ]
 
 export function Sidebar() {

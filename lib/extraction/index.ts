@@ -14,13 +14,9 @@ export interface ExtractionResult {
   error?: string
 }
 
-export interface ExtractionOptions {
-  geminiApiKey?: string
-  modelName?: string
-  temperature?: number
-}
 
-export async function extractTransaction(rawText: string, options?: ExtractionOptions): Promise<ExtractionResult> {
+
+export async function extractTransaction(rawText: string): Promise<ExtractionResult> {
   if (!rawText || rawText.trim().length < 3) {
     return { success: false, extraction: null, validation: null, error: 'Input too short' }
   }
@@ -58,8 +54,7 @@ export async function extractTransaction(rawText: string, options?: ExtractionOp
         },
         knownProducts: dictionaryResult.matchedProducts,
         knownParties: [...dictionaryResult.matchedVendors, ...dictionaryResult.matchedCustomers],
-      },
-      options
+      }
     )
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Gemini extraction failed'
