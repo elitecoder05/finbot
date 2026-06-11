@@ -3,14 +3,12 @@ export interface ExtractionApiResponse {
     transactionType: string
     amount: number | null
     product: string | null
-    vendor: string | null
-    customer: string | null
+    person: string | null
     quantity: number | null
     unit: string | null
     notes: string | null
     confidence: number
     date?: string | null
-    paymentDirection?: 'incoming' | 'outgoing' | null
   }
   validation: {
     isValid: boolean
@@ -27,11 +25,9 @@ export interface TransactionApiResponse {
     transactionType: string
     amount: number
     product: string
-    vendor: string
-    customer: string
+    person: string | null
     quantity: number | null
     unit: string | null
-    paymentDirection: string
     notes: string | null
     date: string
     confidence: number
@@ -65,13 +61,11 @@ export async function createTransaction(payload: {
   transactionType: string
   amount: number
   product?: string | null
-  vendor?: string | null
-  customer?: string | null
+  person?: string | null
   quantity?: number | null
   unit?: string | null
   notes?: string | null
   date?: string | null
-  paymentDirection?: string | null
 }): Promise<TransactionApiResponse> {
   const res = await fetch('/api/transactions', {
     method: 'POST',

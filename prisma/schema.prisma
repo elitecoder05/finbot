@@ -34,11 +34,9 @@ model Transaction {
   transactionType   String
   amount            Float
   product           String?
-  vendor            String?
-  customer          String?
+  person            String?
   quantity          Float?
   unit              String?
-  paymentDirection  String
   category          String?
   notes             String?
   date              DateTime

@@ -123,11 +123,8 @@ export default function TransactionsPage() {
                   {tx.product ? (
                     <p className="text-sm text-zinc-700 dark:text-zinc-300">Product: {(tx.product as string)}</p>
                   ) : null}
-                  {tx.vendor ? (
-                    <p className="text-sm text-zinc-700 dark:text-zinc-300">Vendor: {(tx.vendor as string)}</p>
-                  ) : null}
-                  {tx.customer ? (
-                    <p className="text-sm text-zinc-700 dark:text-zinc-300">Customer: {(tx.customer as string)}</p>
+                  {tx.person ? (
+                    <p className="text-sm text-zinc-700 dark:text-zinc-300">Person: {(tx.person as string)}</p>
                   ) : null}
                   {tx.notes ? (
                     <p className="text-xs text-zinc-500">Notes: {(tx.notes as string)}</p>

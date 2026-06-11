@@ -1,12 +1,5 @@
 // Transaction Types
-export type TransactionType = 
-  | 'purchase'
-  | 'sale'
-  | 'expense'
-  | 'income'
-  | 'transfer'
-  | 'advance'
-  | 'other'
+export type TransactionType = 'purchase' | 'payment'
 
 export type TransactionStatus = 
   | 'draft'
@@ -22,14 +15,12 @@ export interface AIExtractionResult {
   transactionType: TransactionType
   amount: number | null
   product: string | null
-  vendor: string | null
-  customer: string | null
+  person: string | null
   quantity: number | null
   unit: string | null
   notes: string | null
   confidence: number
   date?: string | null
-  paymentDirection?: 'incoming' | 'outgoing' | null
 }
 
 // Regex Extraction Result

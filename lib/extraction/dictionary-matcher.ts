@@ -2,8 +2,7 @@ import { prisma } from '@/lib/db/client'
 
 export interface DictionaryMatch {
   matchedProducts: string[]
-  matchedVendors: string[]
-  matchedCustomers: string[]
+  matchedParties: string[]
   productCandidates: string[]
   partyCandidates: string[]
 }
@@ -71,12 +70,9 @@ export async function matchDictionaries(rawText: string): Promise<DictionaryMatc
 
   const knownProducts = products.map((p) => p.name)
   const knownParties = parties.map((p) => p.name)
-  const vendors = parties.filter((p) => p.type === 'vendor').map((p) => p.name)
-  const customers = parties.filter((p) => p.type === 'customer').map((p) => p.name)
 
   const matchedProducts: string[] = []
-  const matchedVendors: string[] = []
-  const matchedCustomers: string[] = []
+  const matchedParties: string[] = []
   const productCandidates: string[] = []
   const partyCandidates: string[] = []
 
@@ -95,8 +91,7 @@ export async function matchDictionaries(rawText: string): Promise<DictionaryMatc
 
   for (const name of knownParties) {
     if (containsWord(rawText, name)) {
-      if (vendors.includes(name)) matchedVendors.push(name)
-      if (customers.includes(name)) matchedCustomers.push(name)
+      matchedParties.push(name)
     }
   }
 
@@ -104,7 +99,7 @@ export async function matchDictionaries(rawText: string): Promise<DictionaryMatc
     for (const name of knownParties) {
       if (
         (name.includes(chunk) || chunk.includes(name)) &&
-        ![...matchedVendors, ...matchedCustomers].includes(name)
+        !matchedParties.includes(name)
       ) {
         partyCandidates.push(name)
         break
@@ -114,8 +109,7 @@ export async function matchDictionaries(rawText: string): Promise<DictionaryMatc
 
   return {
     matchedProducts: [...new Set(matchedProducts)],
-    matchedVendors: [...new Set(matchedVendors)],
-    matchedCustomers: [...new Set(matchedCustomers)],
+    matchedParties: [...new Set(matchedParties)],
     productCandidates: [...new Set(productCandidates)],
     partyCandidates: [...new Set(partyCandidates)],
   }

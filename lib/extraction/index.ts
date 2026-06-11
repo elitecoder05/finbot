@@ -26,8 +26,7 @@ export async function extractTransaction(rawText: string): Promise<ExtractionRes
 
   let dictionaryResult: Awaited<ReturnType<typeof matchDictionaries>> = {
     matchedProducts: [],
-    matchedVendors: [],
-    matchedCustomers: [],
+    matchedParties: [],
     productCandidates: [],
     partyCandidates: [],
   }
@@ -50,10 +49,9 @@ export async function extractTransaction(rawText: string): Promise<ExtractionRes
         },
         ruleResult: {
           transactionType: ruleResult.transactionType,
-          paymentDirection: ruleResult.paymentDirection,
         },
         knownProducts: dictionaryResult.matchedProducts,
-        knownParties: [...dictionaryResult.matchedVendors, ...dictionaryResult.matchedCustomers],
+        knownParties: dictionaryResult.matchedParties,
       }
     )
   } catch (err) {

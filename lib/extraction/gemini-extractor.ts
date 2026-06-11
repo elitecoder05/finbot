@@ -10,7 +10,6 @@ export interface GeminiExtractionInput {
   }
   ruleResult: {
     transactionType: string
-    paymentDirection: string | null
   }
   knownProducts: string[]
   knownParties: string[]
@@ -20,12 +19,10 @@ export interface GeminiExtractionOutput {
   transactionType: TransactionType
   amount: number | null
   product: string | null
-  vendor: string | null
-  customer: string | null
+  person: string | null
   quantity: number | null
   unit: string | null
   notes: string | null
-  paymentDirection: 'incoming' | 'outgoing' | null
   confidence: number
   reasoning?: string
 }
@@ -38,17 +35,10 @@ interface GeminiResponse {
   candidates?: { content: { parts: GeminiPart[] } }[]
 }
 
-const VALID_TYPES: TransactionType[] = [
-  'purchase', 'sale', 'expense', 'income', 'transfer', 'advance', 'other',
-]
+const VALID_TYPES: TransactionType[] = ['purchase', 'payment']
 
 function narrowType(t: string): TransactionType {
-  return VALID_TYPES.includes(t as TransactionType) ? (t as TransactionType) : 'other'
-}
-
-function narrowDirection(d: string | null): 'incoming' | 'outgoing' | null {
-  if (d === 'incoming' || d === 'outgoing') return d
-  return null
+  return VALID_TYPES.includes(t as TransactionType) ? (t as TransactionType) : 'payment'
 }
 
 async function callGeminiDirect(prompt: string, apiKey: string, modelName: string, temperature: number): Promise<string> {
@@ -95,12 +85,13 @@ export async function extractWithGemini(
 
 RULES:
 - Never invent data. Use null for unknown fields.
-- "vendor" is the entity we PAID money TO.
-- "customer" is the entity we RECEIVED money FROM.
-- Do not include the amount in the party name.
-- For "bought/purchased X from Y", Y is the vendor.
-- For "sold X to Y", Y is the customer.
-- "paymentDirection" is "incoming" if money comes INTO the family, "outgoing" if money goes OUT.
+- "person" is the other party in the transaction (who you paid money to, or who you bought from).
+- Do not include the amount in the person name.
+- "transactionType" is either "purchase" (buying goods/items) or "payment" (paying money for any reason).
+- For "bought/purchased X from Y", transactionType is "purchase" and person is Y.
+- For "paid X to Y" or "gave X to Y", transactionType is "payment" and person is Y.
+- For "bought/purchased X from Y", person is Y.
+- For "paid X to Y", person is Y.
 
 Known products: ${knownProducts.length > 0 ? knownProducts.join(', ') : 'None'}
 Known parties: ${knownParties.length > 0 ? knownParties.join(', ') : 'None'}
@@ -111,22 +102,19 @@ PRE-EXTRACTED DATA (from regex and rule engines):
 - Detected unit: ${regexResult.unit ?? 'null'}
 - Detected date: ${regexResult.date ?? 'null'}
 - Rule-based transaction type: ${ruleResult.transactionType ?? 'null'}
-- Rule-based payment direction: ${ruleResult.paymentDirection ?? 'null'}
 
 RAW USER INPUT:
 "${rawText}"
 
 Return ONLY a valid JSON object with this exact schema:
 {
-  "transactionType": "purchase" | "sale" | "expense" | "income" | "transfer" | "advance" | "other",
+  "transactionType": "purchase" | "payment",
   "amount": number | null,
   "product": string | null,
-  "vendor": string | null,
-  "customer": string | null,
+  "person": string | null,
   "quantity": number | null,
   "unit": string | null,
   "notes": string | null,
-  "paymentDirection": "incoming" | "outgoing" | null,
   "confidence": number,
   "reasoning": string
 }`
@@ -138,29 +126,25 @@ Return ONLY a valid JSON object with this exact schema:
     const parsed = JSON.parse(cleaned)
 
     return {
-      transactionType: narrowType(parsed.transactionType ?? ruleResult.transactionType ?? 'other'),
+      transactionType: narrowType(parsed.transactionType ?? ruleResult.transactionType ?? 'payment'),
       amount: typeof parsed.amount === 'number' ? parsed.amount : (regexResult.amount ?? null),
       product: typeof parsed.product === 'string' ? parsed.product : null,
-      vendor: typeof parsed.vendor === 'string' ? parsed.vendor : null,
-      customer: typeof parsed.customer === 'string' ? parsed.customer : null,
+      person: typeof parsed.person === 'string' ? parsed.person : null,
       quantity: typeof parsed.quantity === 'number' ? parsed.quantity : (regexResult.quantity ?? null),
       unit: typeof parsed.unit === 'string' ? parsed.unit : (regexResult.unit ?? null),
       notes: typeof parsed.notes === 'string' ? parsed.notes : null,
-      paymentDirection: narrowDirection(parsed.paymentDirection) ?? narrowDirection(ruleResult.paymentDirection) ?? null,
       confidence: typeof parsed.confidence === 'number' ? Math.max(0, Math.min(1, parsed.confidence)) : 0.5,
       reasoning: typeof parsed.reasoning === 'string' ? parsed.reasoning : undefined,
     }
   } catch {
     return {
-      transactionType: narrowType(ruleResult.transactionType ?? 'other'),
+      transactionType: narrowType(ruleResult.transactionType ?? 'payment'),
       amount: regexResult.amount,
       product: null,
-      vendor: null,
-      customer: null,
+      person: null,
       quantity: regexResult.quantity,
       unit: regexResult.unit,
       notes: null,
-      paymentDirection: narrowDirection(ruleResult.paymentDirection),
       confidence: 0.3,
       reasoning: 'Failed to parse Gemini response, fell back to rule/regex results',
     }

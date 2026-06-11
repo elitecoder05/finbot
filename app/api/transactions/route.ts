@@ -52,24 +52,20 @@ export async function POST(request: Request) {
       transactionType,
       amount,
       product,
-      vendor,
-      customer,
+      person,
       quantity,
       unit,
       notes,
       date,
-      paymentDirection,
     } = body as {
       transactionType?: string
       amount?: number
       product?: string | null
-      vendor?: string | null
-      customer?: string | null
+      person?: string | null
       quantity?: number | null
       unit?: string | null
       notes?: string | null
       date?: string | null
-      paymentDirection?: string | null
     }
 
     if (!transactionType || amount === undefined || amount === null || amount <= 0) {
@@ -88,13 +84,11 @@ export async function POST(request: Request) {
         transactionType: transactionType as TransactionType,
         amount,
         product: product ?? '',
-        vendor: vendor ?? '',
-        customer: customer ?? '',
+        person: person ?? null,
         quantity: quantity ?? null,
         unit: unit ?? null,
         notes: notes ?? null,
         date: parsedDate,
-        paymentDirection: paymentDirection ?? 'outgoing',
         confidence: 1,
         status: 'pending',
         createdById: session.userId,

@@ -15,7 +15,7 @@ export async function GET(request: Request) {
     else if (range === '1y') startDate = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000)
     else startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
 
-    const [typeSummary, monthlyTrends, vendorSummary, productSummary, approvalMetrics] = await Promise.all([
+    const [typeSummary, monthlyTrends, personSummary, productSummary, approvalMetrics] = await Promise.all([
       prisma.transaction.groupBy({
         by: ['transactionType'],
         where: { status: 'approved', date: { gte: startDate } },
@@ -24,14 +24,14 @@ export async function GET(request: Request) {
       }),
       prisma.$queryRaw<{ month: string; total: number; count: number }[]>`
         SELECT strftime('%Y-%m', date) as month, SUM(amount) as total, COUNT(*) as count
-        FROM Transaction
+        FROM "Transaction"
         WHERE status = 'approved' AND date >= ${startDate.toISOString()}
         GROUP BY strftime('%Y-%m', date)
         ORDER BY month ASC
       `,
       prisma.transaction.groupBy({
-        by: ['vendor'],
-        where: { status: 'approved', date: { gte: startDate }, vendor: { not: '' } },
+        by: ['person'],
+        where: { status: 'approved', date: { gte: startDate }, person: { not: '' } },
         _sum: { amount: true },
         _count: { _all: true },
         orderBy: { _sum: { amount: 'desc' } },
@@ -57,7 +57,7 @@ export async function GET(request: Request) {
       startDate: startDate.toISOString(),
       typeSummary,
       monthlyTrends,
-      vendorSummary,
+      personSummary,
       productSummary,
       approvalMetrics,
     })

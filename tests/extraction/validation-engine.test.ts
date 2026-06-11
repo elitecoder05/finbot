@@ -18,12 +18,10 @@ function makeGemini(overrides: Partial<GeminiExtractionOutput> = {}): GeminiExtr
     transactionType: 'purchase' as const,
     amount: 1500,
     product: 'cement',
-    vendor: 'Suresh',
-    customer: null,
+    person: 'Suresh',
     quantity: null,
     unit: null,
     notes: null,
-    paymentDirection: 'outgoing' as const,
     confidence: 0.95,
     ...overrides,
   }
@@ -44,34 +42,27 @@ describe('validateExtraction', () => {
     )
   })
 
-  it('warns when vendor name looks like leftover text', () => {
+  it('warns when person name looks like leftover text', () => {
     const r = validateExtraction(
       'Bought 500 worth cement from Suresh',
       baseRegex,
       null,
-      makeGemini({ vendor: 'from' })
+      makeGemini({ person: 'from' })
     )
     expect(r.warnings).toEqual(
       expect.arrayContaining([expect.stringContaining('suspicious')])
     )
   })
 
-  it('warns on both vendor and customer for purchase', () => {
-    const r = validateExtraction('Bought cement', baseRegex, null, makeGemini({ customer: 'Vinod' }))
+  it('warns on missing person for transaction', () => {
+    const r = validateExtraction('Some purchase', baseRegex, null, makeGemini({ person: null }))
     expect(r.warnings).toEqual(
-      expect.arrayContaining([expect.stringContaining('vendor')])
-    )
-  })
-
-  it('warns on missing party for outgoing transaction', () => {
-    const r = validateExtraction('Some purchase', baseRegex, null, makeGemini({ vendor: null, customer: null }))
-    expect(r.warnings).toEqual(
-      expect.arrayContaining([expect.stringContaining('vendor')])
+      expect.arrayContaining([expect.stringContaining('person')])
     )
   })
 
   it('requires confirmation when confidence below 0.7', () => {
-    const r = validateExtraction('Some transaction', baseRegex, null, makeGemini({ confidence: 0.4, transactionType: 'other' }))
+    const r = validateExtraction('Some transaction', baseRegex, null, makeGemini({ confidence: 0.4, transactionType: 'payment' }))
     expect(r.requiresUserConfirmation).toBe(true)
     expect(r.warnings).toEqual(
       expect.arrayContaining([expect.stringContaining('threshold')])

@@ -11,7 +11,7 @@ export interface ValidationResult {
   requiresUserConfirmation: boolean
 }
 
-const SUSPICIOUS_VENDOR_PATTERNS = [
+const SUSPICIOUS_PERSON_PATTERNS = [
   /^(?:worth|for|from|to|and|the|a|an|of|in|on|at|with|by)$/i,
   /^(?:bought|purchased|sold|paid|received|transferred|gave|got|sent)$/i,
   /\d/,
@@ -38,37 +38,20 @@ export function validateExtraction(
     errors.push('No amount detected in the input.')
   }
 
-  const validTypes = ['purchase', 'sale', 'expense', 'income', 'transfer', 'advance', 'other']
+  const validTypes = ['purchase', 'payment']
   if (!validTypes.includes(geminiResult.transactionType)) {
     errors.push(`Invalid transaction type: ${geminiResult.transactionType}`)
   }
 
-  if (geminiResult.vendor && SUSPICIOUS_VENDOR_PATTERNS.some((p) => p.test(geminiResult.vendor!))) {
-    warnings.push(`Vendor name "${geminiResult.vendor}" looks suspicious and may be incorrect.`)
-  }
-
-  if (geminiResult.customer && geminiResult.vendor) {
-    if (geminiResult.transactionType === 'purchase' || geminiResult.transactionType === 'expense') {
-      warnings.push('Purchase/Expense with both vendor and customer — customer is likely incorrect.')
-    }
-    if (geminiResult.transactionType === 'sale') {
-      warnings.push('Sale with both vendor and customer — vendor is likely incorrect.')
-    }
+  if (geminiResult.person && SUSPICIOUS_PERSON_PATTERNS.some((p) => p.test(geminiResult.person!))) {
+    warnings.push(`Person name "${geminiResult.person}" looks suspicious and may be incorrect.`)
   }
 
   if (
-    (geminiResult.transactionType === 'purchase' || geminiResult.transactionType === 'expense') &&
-    !geminiResult.vendor &&
-    !geminiResult.customer
+    (geminiResult.transactionType === 'purchase' || geminiResult.transactionType === 'payment') &&
+    !geminiResult.person
   ) {
-    warnings.push('Outgoing transaction has no vendor or customer identified.')
-  }
-  if (
-    geminiResult.transactionType === 'sale' &&
-    !geminiResult.customer &&
-    !geminiResult.vendor
-  ) {
-    warnings.push('Sale transaction has no customer identified.')
+    warnings.push('Transaction has no person identified.')
   }
 
   if (geminiResult.quantity !== null && !geminiResult.unit) {
@@ -101,8 +84,7 @@ export function buildAiExtractionResult(
     transactionType: geminiResult.transactionType,
     amount: geminiResult.amount ?? regexResult.amount ?? null,
     product: geminiResult.product,
-    vendor: geminiResult.vendor,
-    customer: geminiResult.customer,
+    person: geminiResult.person,
     quantity: geminiResult.quantity ?? regexResult.quantity ?? null,
     unit: geminiResult.unit ?? regexResult.unit ?? null,
     notes: geminiResult.notes,

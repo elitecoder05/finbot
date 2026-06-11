@@ -95,12 +95,10 @@ export default function DashboardPage() {
           transactionType: extraction.transactionType,
           amount: extraction.amount ?? 0,
           product: extraction.product,
-          vendor: extraction.vendor,
-          customer: extraction.customer,
+          person: extraction.person,
           quantity: extraction.quantity ?? undefined,
           unit: extraction.unit,
           notes: extraction.notes,
-          paymentDirection: extraction.paymentDirection ?? 'outgoing',
         })
 
         const transaction = result.transaction
