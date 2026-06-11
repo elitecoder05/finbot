@@ -17,7 +17,7 @@ export function Sidebar() {
   if (!user) return null
 
   return (
-    <aside className="hidden w-64 flex-col border-r border-zinc-200 bg-white/60 p-4 dark:border-zinc-800 dark:bg-zinc-900/50 md:flex">
+    <aside className="hidden w-64 flex-col border-r border-zinc-200 bg-white p-4 md:flex">
       <div className="mb-6">
         <h2 className="text-sm font-semibold tracking-tight">Family Finance</h2>
         <p className="mt-1 text-xs text-zinc-500">AI-powered accounting</p>
@@ -32,8 +32,8 @@ export function Sidebar() {
               href={item.href}
               className={`flex items-center gap-3 rounded-xl px-3 py-2 text-sm transition-colors ${
                 active
-                  ? 'bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900'
-                  : 'text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800'
+                  ? 'bg-emerald-50 text-emerald-700'
+                  : 'text-zinc-600 hover:bg-zinc-100'
               }`}
             >
               <span>{item.icon}</span>
@@ -44,7 +44,7 @@ export function Sidebar() {
       </nav>
 
       <div className="mt-auto">
-        <div className="rounded-xl border border-zinc-200 bg-white p-3 dark:border-zinc-800 dark:bg-zinc-950">
+        <div className="rounded-xl border border-zinc-200 bg-white p-3">
           <p className="text-xs font-medium">Signed in as</p>
           <p className="mt-1 text-sm font-semibold">{user.name}</p>
           <p className="text-xs text-zinc-500 capitalize">{user.role}</p>

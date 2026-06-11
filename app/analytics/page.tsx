@@ -158,10 +158,10 @@ export default function AnalyticsPage() {
 
   if (authLoading) {
     return (
-      <div className="flex min-h-screen flex-col" style={{ backgroundColor: '#111B21' }}>
+      <div className="flex min-h-screen flex-col bg-gray-50">
         <TopBar />
         <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-4 px-4 py-6">
-          <p className="text-sm text-zinc-500">Loading...</p>
+          <p className="text-sm text-gray-500">Loading...</p>
         </main>
       </div>
     )
@@ -173,14 +173,14 @@ export default function AnalyticsPage() {
   const totalTransactions = data?.typeSummary?.reduce((sum, item) => sum + item._count._all, 0) || 0
 
   return (
-    <div className="flex min-h-screen flex-col" style={{ backgroundColor: '#111B21' }}>
+    <div className="flex min-h-screen flex-col bg-gray-50">
       <TopBar />
       <div className="flex flex-1">
         <Sidebar />
         <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-6 px-4 py-6">
           <div className="flex flex-col gap-1">
             <h1 className="text-lg font-semibold">Analytics</h1>
-            <p className="text-sm text-zinc-600 dark:text-zinc-400">Financial insights and reports.</p>
+            <p className="text-sm text-zinc-600">Financial insights and reports.</p>
           </div>
 
           <div className="flex gap-2">
@@ -191,8 +191,8 @@ export default function AnalyticsPage() {
                 onClick={() => setRange(r.value)}
                 className={`rounded-lg px-3 py-1.5 text-sm ${
                   range === r.value
-                    ? 'bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900'
-                    : 'border border-zinc-300 text-zinc-700 dark:border-zinc-700 dark:text-zinc-300'
+                    ? 'bg-emerald-500 text-white'
+                    : 'border border-zinc-300 bg-white text-zinc-700'
                 }`}
               >
                 {r.label}
@@ -200,7 +200,7 @@ export default function AnalyticsPage() {
             ))}
           </div>
 
-          {error ? <p className="text-sm text-red-600 dark:text-red-400">{error}</p> : null}
+          {error ? <p className="text-sm text-red-600">{error}</p> : null}
 
           {loading ? (
             <p className="text-sm text-zinc-500">Loading analytics...</p>
@@ -216,7 +216,7 @@ export default function AnalyticsPage() {
               </div>
 
               <div className="grid gap-4 md:grid-cols-2">
-                <section className="rounded-2xl border border-zinc-200 bg-white/80 p-4 dark:border-zinc-800 dark:bg-zinc-900/70">
+                <section className="rounded-2xl border border-zinc-200 bg-white p-4">
                   <h2 className="mb-3 text-sm font-semibold">Transaction Types</h2>
                   {data.typeSummary.length === 0 ? (
                     <p className="text-sm text-zinc-500">No data for this period.</p>
@@ -235,7 +235,7 @@ export default function AnalyticsPage() {
                   )}
                 </section>
 
-                <section className="rounded-2xl border border-zinc-200 bg-white/80 p-4 dark:border-zinc-800 dark:bg-zinc-900/70">
+                <section className="rounded-2xl border border-zinc-200 bg-white p-4">
                   <h2 className="mb-3 text-sm font-semibold">Monthly Trends</h2>
                   {data.monthlyTrends.length === 0 ? (
                     <p className="text-sm text-zinc-500">No data for this period.</p>
@@ -254,7 +254,7 @@ export default function AnalyticsPage() {
                   )}
                 </section>
 
-                <section className="rounded-2xl border border-zinc-200 bg-white/80 p-4 dark:border-zinc-800 dark:bg-zinc-900/70">
+                <section className="rounded-2xl border border-zinc-200 bg-white p-4">
                   <h2 className="mb-3 text-sm font-semibold">Top Persons</h2>
                   {data.personSummary.length === 0 ? (
                     <p className="text-sm text-zinc-500">No data for this period.</p>
@@ -265,7 +265,7 @@ export default function AnalyticsPage() {
                           key={item.person}
                           type="button"
                           onClick={() => handleSelectPerson(item.person)}
-                          className="flex w-full items-center justify-between rounded-lg px-2 py-1 text-left hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                          className="flex w-full items-center justify-between rounded-lg px-2 py-1 text-left hover:bg-zinc-100"
                         >
                           <span className="text-sm">{item.person}</span>
                           <div className="text-right">
@@ -278,7 +278,7 @@ export default function AnalyticsPage() {
                   )}
                 </section>
 
-                <section className="rounded-2xl border border-zinc-200 bg-white/80 p-4 dark:border-zinc-800 dark:bg-zinc-900/70">
+                <section className="rounded-2xl border border-zinc-200 bg-white p-4">
                   <h2 className="mb-3 text-sm font-semibold">Top Products</h2>
                   {data.productSummary.length === 0 ? (
                     <p className="text-sm text-zinc-500">No data for this period.</p>
@@ -299,7 +299,7 @@ export default function AnalyticsPage() {
               </div>
 
               {/* Person Ledger Section */}
-              <section className="rounded-2xl border border-zinc-200 bg-white/80 p-4 dark:border-zinc-800 dark:bg-zinc-900/70">
+              <section className="rounded-2xl border border-zinc-200 bg-white p-4">
                 <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <h2 className="text-sm font-semibold">Person Ledger</h2>
                   <div className="relative w-full sm:w-72" ref={personDropdownRef}>
@@ -312,11 +312,11 @@ export default function AnalyticsPage() {
                       }}
                       onFocus={() => setShowPersonDropdown(true)}
                       placeholder="Search or select a person..."
-                      className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-900"
+                      className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm"
                     />
                     {selectedPerson && (
                       <div className="mt-2 flex items-center gap-2">
-                        <span className="rounded-full bg-zinc-900 px-2 py-0.5 text-xs text-white dark:bg-zinc-100 dark:text-zinc-900">
+                        <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-700">
                           {selectedPerson}
                         </span>
                         <button
@@ -325,21 +325,21 @@ export default function AnalyticsPage() {
                             setSelectedPerson(null)
                             setPersonSearch('')
                           }}
-                          className="text-xs text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
+                          className="text-xs text-zinc-500 hover:text-zinc-700"
                         >
                           Clear
                         </button>
                       </div>
                     )}
                     {showPersonDropdown && filteredParties.length > 0 && (
-                      <div className="absolute left-0 right-0 top-full z-50 mt-1 max-h-48 overflow-y-auto rounded-md border border-zinc-200 bg-white shadow-lg dark:border-zinc-700 dark:bg-zinc-900">
+                      <div className="absolute left-0 right-0 top-full z-50 mt-1 max-h-48 overflow-y-auto rounded-md border border-zinc-200 bg-white shadow-lg">
                         {filteredParties.map((party) => (
                           <button
                             key={party.id}
                             type="button"
                             onClick={() => handleSelectPerson(party.name)}
-                            className={`flex w-full items-center justify-between px-3 py-2 text-left text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800 ${
-                              selectedPerson === party.name ? 'bg-zinc-100 dark:bg-zinc-800 font-medium' : ''
+                            className={`flex w-full items-center justify-between px-3 py-2 text-left text-sm hover:bg-zinc-100 ${
+                              selectedPerson === party.name ? 'bg-zinc-100 font-medium' : ''
                             }`}
                           >
                             <span>{party.name}</span>
@@ -349,7 +349,7 @@ export default function AnalyticsPage() {
                       </div>
                     )}
                     {showPersonDropdown && personSearch && filteredParties.length === 0 && (
-                      <div className="absolute left-0 right-0 top-full z-50 mt-1 rounded-md border border-zinc-200 bg-white p-3 shadow-lg dark:border-zinc-700 dark:bg-zinc-900">
+                      <div className="absolute left-0 right-0 top-full z-50 mt-1 rounded-md border border-zinc-200 bg-white p-3 shadow-lg">
                         <p className="text-xs text-zinc-500">No person found matching &quot;{personSearch}&quot;</p>
                         <p className="mt-1 text-xs text-zinc-400">Add them from the chat when saving a transaction.</p>
                       </div>
@@ -362,39 +362,39 @@ export default function AnalyticsPage() {
                 ) : ledgerLoading ? (
                   <p className="text-sm text-zinc-500">Loading ledger...</p>
                 ) : ledgerError ? (
-                  <p className="text-sm text-red-600 dark:text-red-400">{ledgerError}</p>
+                  <p className="text-sm text-red-600">{ledgerError}</p>
                 ) : ledgerData ? (
                   <div className="space-y-4">
                     {/* Summary Cards */}
                     <div className="grid gap-3 sm:grid-cols-4">
-                      <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-3 dark:border-zinc-700 dark:bg-zinc-800">
+                      <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-3">
                         <p className="text-xs text-zinc-500">Total Purchases</p>
-                        <p className="mt-1 text-lg font-semibold text-red-600 dark:text-red-400">
+                        <p className="mt-1 text-lg font-semibold text-red-600">
                           ₹{ledgerData.summary.totalPurchases.toLocaleString('en-IN')}
                         </p>
                       </div>
-                      <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-3 dark:border-zinc-700 dark:bg-zinc-800">
+                      <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-3">
                         <p className="text-xs text-zinc-500">Total Payments</p>
-                        <p className="mt-1 text-lg font-semibold text-green-600 dark:text-green-400">
+                        <p className="mt-1 text-lg font-semibold text-green-600">
                           ₹{ledgerData.summary.totalPayments.toLocaleString('en-IN')}
                         </p>
                       </div>
-                      <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-3 dark:border-zinc-700 dark:bg-zinc-800">
+                      <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-3">
                         <p className="text-xs text-zinc-500">Transactions</p>
                         <p className="mt-1 text-lg font-semibold">{ledgerData.summary.transactionCount}</p>
                       </div>
                       <div className={`rounded-xl border p-3 ${
                         ledgerData.summary.finalBalance >= 0
-                          ? 'border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-950'
-                          : 'border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-950'
+                          ? 'border-green-200 bg-green-50'
+                          : 'border-red-200 bg-red-50'
                       }`}>
                         <p className="text-xs text-zinc-500">
                           {ledgerData.summary.finalBalance >= 0 ? 'They owe you' : 'You owe them'}
                         </p>
                         <p className={`mt-1 text-lg font-semibold ${
                           ledgerData.summary.finalBalance >= 0
-                            ? 'text-green-700 dark:text-green-300'
-                            : 'text-red-700 dark:text-red-300'
+                            ? 'text-green-700'
+                            : 'text-red-700'
                         }`}>
                           ₹{Math.abs(ledgerData.summary.finalBalance).toLocaleString('en-IN')}
                         </p>
@@ -408,7 +408,7 @@ export default function AnalyticsPage() {
                       <div className="overflow-x-auto">
                         <table className="w-full text-sm">
                           <thead>
-                            <tr className="border-b border-zinc-200 text-left dark:border-zinc-700">
+                            <tr className="border-b border-zinc-200 text-left">
                               <th className="pb-2 pr-4 font-medium text-zinc-500">Date</th>
                               <th className="pb-2 pr-4 font-medium text-zinc-500">Type</th>
                               <th className="pb-2 pr-4 font-medium text-zinc-500">Product</th>
@@ -420,8 +420,8 @@ export default function AnalyticsPage() {
                           </thead>
                           <tbody>
                             {ledgerData.transactions.map((entry) => (
-                              <tr key={entry.id} className="border-b border-zinc-100 dark:border-zinc-800">
-                                <td className="py-2 pr-4 text-zinc-600 dark:text-zinc-400">
+                              <tr key={entry.id} className="border-b border-zinc-100">
+                                <td className="py-2 pr-4 text-zinc-600">
                                   {new Date(entry.date).toLocaleDateString('en-IN', {
                                     day: '2-digit',
                                     month: 'short',
@@ -431,35 +431,35 @@ export default function AnalyticsPage() {
                                 <td className="py-2 pr-4">
                                   <span className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${
                                     entry.transactionType === 'purchase'
-                                      ? 'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300'
-                                      : 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300'
+                                      ? 'bg-red-100 text-red-700'
+                                      : 'bg-green-100 text-green-700'
                                   }`}>
                                     {entry.transactionType}
                                   </span>
                                 </td>
-                                <td className="py-2 pr-4 text-zinc-700 dark:text-zinc-300">
+                                <td className="py-2 pr-4 text-zinc-700">
                                   {entry.product ?? '—'}
                                 </td>
-                                <td className="py-2 pr-4 text-red-600 dark:text-red-400">
+                                <td className="py-2 pr-4 text-red-600">
                                   {entry.debit > 0 ? `₹${entry.debit.toLocaleString('en-IN')}` : '—'}
                                 </td>
-                                <td className="py-2 pr-4 text-green-600 dark:text-green-400">
+                                <td className="py-2 pr-4 text-green-600">
                                   {entry.credit > 0 ? `₹${entry.credit.toLocaleString('en-IN')}` : '—'}
                                 </td>
                                 <td className={`py-2 pr-4 font-medium ${
                                   entry.balance >= 0
-                                    ? 'text-green-700 dark:text-green-300'
-                                    : 'text-red-700 dark:text-red-300'
+                                    ? 'text-green-700'
+                                    : 'text-red-700'
                                 }`}>
                                   {entry.balance >= 0 ? '+' : '-'}₹{Math.abs(entry.balance).toLocaleString('en-IN')}
                                 </td>
                                 <td className="py-2">
                                   <span className={`inline-block rounded-full px-2 py-0.5 text-xs ${
                                     entry.status === 'approved'
-                                      ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300'
+                                      ? 'bg-green-100 text-green-700'
                                       : entry.status === 'pending'
-                                      ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300'
-                                      : 'bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300'
+                                      ? 'bg-yellow-100 text-yellow-700'
+                                      : 'bg-zinc-100 text-zinc-700'
                                   }`}>
                                     {entry.status}
                                   </span>
@@ -468,18 +468,18 @@ export default function AnalyticsPage() {
                             ))}
                           </tbody>
                           <tfoot>
-                            <tr className="border-t-2 border-zinc-300 dark:border-zinc-600">
+                            <tr className="border-t-2 border-zinc-300">
                               <td colSpan={3} className="pt-3 font-semibold">Net Balance</td>
-                              <td className="pt-3 font-semibold text-red-600 dark:text-red-400">
+                              <td className="pt-3 font-semibold text-red-600">
                                 ₹{ledgerData.summary.totalPurchases.toLocaleString('en-IN')}
                               </td>
-                              <td className="pt-3 font-semibold text-green-600 dark:text-green-400">
+                              <td className="pt-3 font-semibold text-green-600">
                                 ₹{ledgerData.summary.totalPayments.toLocaleString('en-IN')}
                               </td>
                               <td colSpan={2} className={`pt-3 font-bold ${
                                 ledgerData.summary.finalBalance >= 0
-                                  ? 'text-green-700 dark:text-green-300'
-                                  : 'text-red-700 dark:text-red-300'
+                                  ? 'text-green-700'
+                                  : 'text-red-700'
                               }`}>
                                 {ledgerData.summary.finalBalance >= 0 ? '+' : '-'}₹{Math.abs(ledgerData.summary.finalBalance).toLocaleString('en-IN')}
                               </td>
@@ -501,7 +501,7 @@ export default function AnalyticsPage() {
 
 function StatCard({ title, value }: { title: string; value: string }) {
   return (
-    <div className="rounded-2xl border border-zinc-200 bg-white/80 p-4 dark:border-zinc-800 dark:bg-zinc-900/70">
+    <div className="rounded-2xl border border-zinc-200 bg-white/90 p-4">
       <p className="text-xs text-zinc-500">{title}</p>
       <p className="mt-1 text-xl font-semibold">{value}</p>
     </div>

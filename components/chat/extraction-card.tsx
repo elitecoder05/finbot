@@ -146,8 +146,8 @@ export function ExtractionCard({
   return (
     <div className="px-3 pt-3 pb-1">
       <div className="mb-2 flex items-center justify-between">
-        <span className="text-xs font-semibold" style={{ color: '#25D366' }}>🧾 Detected Transaction</span>
-        <span className="text-xs text-zinc-400">
+        <span className="text-xs font-semibold text-green-600">🧾 Detected Transaction</span>
+        <span className="text-xs text-gray-500">
           {(confidence ?? extraction.confidence ?? 0) > 0 ? `${((confidence ?? extraction.confidence ?? 0) * 100).toFixed(0)}% confidence` : ''}
         </span>
       </div>

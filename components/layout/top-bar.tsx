@@ -34,7 +34,7 @@ function roleColor(role: string) {
     brother: '#25D366',
     me: '#FF6B35',
   }
-  return colors[role] ?? '#128C7E'
+  return colors[role] ?? '#6366f1'
 }
 
 export function TopBar() {
@@ -74,7 +74,7 @@ export function TopBar() {
   if (!user) return null
 
   return (
-    <header className="sticky top-0 z-50" style={{ backgroundColor: '#075E54' }}>
+    <header className="sticky top-0 z-50 border-b border-zinc-200 bg-white">
       <div className="flex h-14 items-center justify-between px-4">
         {/* Left: Avatar + Name */}
         <div className="flex items-center gap-3">
@@ -85,8 +85,8 @@ export function TopBar() {
             {roleInitials(user.name)}
           </div>
           <div className="flex flex-col leading-tight">
-            <span className="text-sm font-semibold text-white">Family Finance</span>
-            <span className="text-xs" style={{ color: '#9EEDE6' }}>
+            <span className="text-sm font-semibold text-zinc-900">Family Finance</span>
+            <span className="text-xs text-zinc-500">
               {user.name} · {user.role}
             </span>
           </div>
@@ -97,10 +97,10 @@ export function TopBar() {
           <button
             type="button"
             onClick={() => { setOpen((v) => !v); setSwitcherOpen(false) }}
-            className="flex h-9 w-9 items-center justify-center rounded-full transition-colors hover:bg-white/10"
+            className="flex h-9 w-9 items-center justify-center rounded-full transition-colors hover:bg-zinc-100"
             aria-label="Options"
           >
-            <MoreVertical size={20} className="text-white" />
+            <MoreVertical size={20} className="text-zinc-600" />
           </button>
 
           {open && (
@@ -109,8 +109,7 @@ export function TopBar() {
               <div className="fixed inset-0 z-40" onClick={() => { setOpen(false); setSwitcherOpen(false) }} />
 
               <div
-                className="absolute right-0 top-11 z-50 w-52 overflow-hidden rounded-lg shadow-xl"
-                style={{ backgroundColor: '#233138' }}
+                className="absolute right-0 top-11 z-50 w-52 overflow-hidden rounded-lg border border-zinc-200 bg-white shadow-xl"
               >
                 {/* Navigation items */}
                 {NAV_ITEMS.map((item) => {
@@ -120,23 +119,23 @@ export function TopBar() {
                       key={item.href}
                       type="button"
                       onClick={() => navigate(item.href)}
-                      className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm text-white transition-colors hover:bg-white/10"
+                      className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm text-zinc-700 transition-colors hover:bg-zinc-50"
                     >
-                      <Icon size={16} className="shrink-0" style={{ color: '#9EEDE6' }} />
+                      <Icon size={16} className="shrink-0 text-zinc-500" />
                       {item.label}
                     </button>
                   )
                 })}
 
                 {/* Divider */}
-                <div className="my-1 border-t border-white/10" />
+                <div className="my-1 border-t border-zinc-100" />
 
                 {/* Switch User */}
                 <div className="relative">
                   <button
                     type="button"
                     onClick={() => setSwitcherOpen((v) => !v)}
-                    className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left text-sm text-white transition-colors hover:bg-white/10"
+                    className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left text-sm text-zinc-700 transition-colors hover:bg-zinc-50"
                   >
                     <div className="flex items-center gap-3">
                       <div
@@ -147,20 +146,19 @@ export function TopBar() {
                       </div>
                       Switch User
                     </div>
-                    <ChevronRight size={14} style={{ color: '#9EEDE6' }} />
+                    <ChevronRight size={14} className="text-zinc-400" />
                   </button>
 
                   {switcherOpen && (
                     <div
-                      className="absolute right-full top-0 mr-1 w-40 overflow-hidden rounded-lg shadow-xl"
-                      style={{ backgroundColor: '#233138' }}
+                      className="absolute right-full top-0 mr-1 w-40 overflow-hidden rounded-lg border border-zinc-200 bg-white shadow-xl"
                     >
                       {USERS.map((u) => (
                         <button
                           key={u.role}
                           type="button"
                           onClick={() => handleRoleSwitch(u.role)}
-                          className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm text-white transition-colors hover:bg-white/10"
+                          className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm text-zinc-700 transition-colors hover:bg-zinc-50"
                         >
                           <div
                             className="flex h-6 w-6 items-center justify-center rounded-full text-[10px] font-bold text-white shrink-0"
@@ -170,7 +168,7 @@ export function TopBar() {
                           </div>
                           <span className="flex-1">{u.label}</span>
                           {user.role === u.role && (
-                            <span style={{ color: '#25D366', fontSize: 10 }}>✓</span>
+                            <span className="text-green-600" style={{ fontSize: 10 }}>✓</span>
                           )}
                         </button>
                       ))}
@@ -179,12 +177,11 @@ export function TopBar() {
                 </div>
 
                 {/* Logout */}
-                <div className="border-t border-white/10">
+                <div className="border-t border-zinc-100">
                   <button
                     type="button"
                     onClick={handleLogout}
-                    className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm transition-colors hover:bg-white/10"
-                    style={{ color: '#FF6B6B' }}
+                    className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm text-red-600 transition-colors hover:bg-red-50"
                   >
                     <LogOut size={16} className="shrink-0" />
                     Logout
