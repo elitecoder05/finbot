@@ -40,20 +40,31 @@ const CHAT_BG_STYLE = {
   backgroundColor: '#f9fafb',
 }
 
-// Mandatory fields that must be provided
-const MANDATORY_FIELDS: MissingField[] = [
-  { field: 'amount', label: 'Amount' },
-  { field: 'transactionType', label: 'Type' },
-  { field: 'product', label: 'Product' },
-  { field: 'person', label: 'Person' },
-]
-
 function getMissingFields(data: AIExtractionResult): MissingField[] {
-  return MANDATORY_FIELDS.filter((field) => {
+  const mandatoryFields: MissingField[] = [
+    { field: 'amount', label: 'Amount' },
+    { field: 'transactionType', label: 'Type' },
+    { field: 'person', label: 'Person' },
+  ]
+
+  if (data.transactionType === 'purchase') {
+    mandatoryFields.splice(2, 0, { field: 'product', label: 'Product' })
+  }
+
+  return mandatoryFields.filter((field) => {
     const value = data[field.field]
     if (field.field === 'amount') return value === null || value === undefined
     return !value || (typeof value === 'string' && value.trim() === '')
   })
+}
+
+function splitTransactionInputs(text: string): string[] {
+  return text
+    .replace(/\r\n/g, '\n')
+    .split(/\n+/)
+    .flatMap((line) => line.split(/\s*[;|]\s*/))
+    .map((part) => part.replace(/^\s*(?:[-*•]|\d+[.)])\s*/, '').trim())
+    .filter(Boolean)
 }
 
 export default function DashboardPage() {
@@ -88,6 +99,26 @@ export default function DashboardPage() {
     }
     return null
   }, [messages])
+
+  const createAndAppendExtractionMessage = useCallback(async (segmentText: string) => {
+    const result = await extractTransaction(segmentText)
+
+    const extraction = result.extraction as AIExtractionResult
+    const missingFields = getMissingFields(extraction)
+
+    const assistantMessage: ChatMessage = {
+      id: `assistant-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      role: 'assistant',
+      content: missingFields.length > 0
+        ? `I need some more information. Please provide ${missingFields[0].label.toLowerCase()}:`
+        : 'Detected Transaction',
+      extraction,
+      missingFields,
+      timestamp: new Date(),
+    }
+
+    setMessages((prev) => [...prev, assistantMessage])
+  }, [])
 
   const handleFieldInput = useCallback(
     async (value: string, field: MissingField) => {
@@ -145,6 +176,9 @@ export default function DashboardPage() {
         return
       }
 
+      const segments = splitTransactionInputs(text)
+      if (segments.length === 0) return
+
       const userMessage: ChatMessage = {
         id: `user-${Date.now()}`,
         role: 'user',
@@ -160,23 +194,20 @@ export default function DashboardPage() {
       setIsProcessing(true)
 
       try {
-        const result = await extractTransaction(text)
-
-        const extraction = result.extraction as AIExtractionResult
-        const missingFields = getMissingFields(extraction)
-
-        const assistantMessage: ChatMessage = {
-          id: `assistant-${Date.now()}`,
-          role: 'assistant',
-          content: missingFields.length > 0
-            ? `I need some more information. Please provide ${missingFields[0].label.toLowerCase()}:`
-            : 'Detected Transaction',
-          extraction,
-          missingFields,
-          timestamp: new Date(),
+        for (const segment of segments) {
+          try {
+            await createAndAppendExtractionMessage(segment)
+          } catch (err) {
+            const message = err instanceof Error ? err.message : 'Extraction failed'
+            const errorMessage: ChatMessage = {
+              id: `error-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+              role: 'system',
+              content: `Error: ${message}`,
+              timestamp: new Date(),
+            }
+            setMessages((prev) => [...prev, errorMessage])
+          }
         }
-
-        setMessages((prev) => [...prev, assistantMessage])
       } catch (err) {
         const message = err instanceof Error ? err.message : 'Extraction failed'
         const errorMessage: ChatMessage = {
@@ -190,15 +221,8 @@ export default function DashboardPage() {
         setIsProcessing(false)
       }
     },
-    [input, isProcessing, getActiveExtraction, handleFieldInput]
+    [input, isProcessing, getActiveExtraction, handleFieldInput, createAndAppendExtractionMessage]
   )
-
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault()
-      handleSubmit()
-    }
-  }
 
   const handleSaveTransaction = useCallback(
     async (extraction: AIExtractionResult) => {
@@ -424,7 +448,6 @@ export default function DashboardPage() {
               rows={1}
               value={input}
               onChange={handleInputChange}
-              onKeyDown={handleKeyDown}
               placeholder="Type a transaction..."
               disabled={isProcessing}
               className="flex-1 resize-none bg-transparent text-sm outline-none disabled:opacity-60 leading-relaxed"
