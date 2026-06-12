@@ -16,6 +16,11 @@ const SAMPLE_INPUTS = [
   'Sold bricks worth 10000 to Ganesh',
 ]
 
+interface MissingField {
+  field: 'amount' | 'transactionType' | 'product' | 'person'
+  label: string
+}
+
 interface ChatMessage {
   id: string
   role: 'user' | 'assistant' | 'system'
@@ -23,6 +28,7 @@ interface ChatMessage {
   extraction?: AIExtractionResult
   transactionId?: string
   timestamp: Date
+  missingFields?: MissingField[]
 }
 
 function formatTime(date: Date) {
@@ -32,6 +38,22 @@ function formatTime(date: Date) {
 // Light theme background
 const CHAT_BG_STYLE = {
   backgroundColor: '#f9fafb',
+}
+
+// Mandatory fields that must be provided
+const MANDATORY_FIELDS: MissingField[] = [
+  { field: 'amount', label: 'Amount' },
+  { field: 'transactionType', label: 'Type' },
+  { field: 'product', label: 'Product' },
+  { field: 'person', label: 'Person' },
+]
+
+function getMissingFields(data: AIExtractionResult): MissingField[] {
+  return MANDATORY_FIELDS.filter((field) => {
+    const value = data[field.field]
+    if (field.field === 'amount') return value === null || value === undefined
+    return !value || (typeof value === 'string' && value.trim() === '')
+  })
 }
 
 export default function DashboardPage() {
@@ -56,10 +78,72 @@ export default function DashboardPage() {
     el.style.height = Math.min(el.scrollHeight, 120) + 'px'
   }
 
+  // Find the extraction message that's currently in follow-up mode
+  const getActiveExtraction = useCallback(() => {
+    for (let i = messages.length - 1; i >= 0; i--) {
+      const msg = messages[i]
+      if (msg.role === 'assistant' && msg.extraction && msg.missingFields && msg.missingFields.length > 0) {
+        return { message: msg, index: i }
+      }
+    }
+    return null
+  }, [messages])
+
+  const handleFieldInput = useCallback(
+    async (value: string, field: MissingField) => {
+      const active = getActiveExtraction()
+      if (!active) return
+
+      const { message: msg, index } = active
+      let parsedValue: string | number = value
+
+      // Parse value based on field type
+      if (field.field === 'amount') {
+        parsedValue = parseFloat(value) || 0
+      }
+
+      // Update the extraction with the provided value
+      const updatedExtraction = { ...msg.extraction!, [field.field]: parsedValue } as AIExtractionResult
+
+      // Check for remaining missing fields
+      const remainingMissing = getMissingFields(updatedExtraction)
+
+      if (remainingMissing.length === 0) {
+        // All required fields are filled; let the user confirm or discard the updated extraction.
+        setMessages((prev) =>
+          prev.map((m, i) => (i === index ? { ...m, extraction: updatedExtraction, missingFields: [] } : m))
+        )
+      } else {
+        // Still have missing fields, ask for next one
+        setMessages((prev) =>
+          prev.map((m, i) => (i === index ? { ...m, extraction: updatedExtraction, missingFields: remainingMissing } : m))
+        )
+        // Add follow-up prompt message
+        const nextField = remainingMissing[0]
+        const followUpMessage: ChatMessage = {
+          id: `followup-${Date.now()}`,
+          role: 'assistant',
+          content: `Please provide ${nextField.label.toLowerCase()}:`,
+          timestamp: new Date(),
+        }
+        setMessages((prev) => [...prev, followUpMessage])
+      }
+    },
+    [messages, getActiveExtraction]
+  )
+
   const handleSubmit = useCallback(
     async (value?: string) => {
       const text = (value ?? input).trim()
       if (!text || isProcessing) return
+
+      // Check if we're responding to a follow-up prompt
+      const active = getActiveExtraction()
+      if (active) {
+        handleFieldInput(text, active.message.missingFields![0])
+        setInput('')
+        return
+      }
 
       const userMessage: ChatMessage = {
         id: `user-${Date.now()}`,
@@ -78,11 +162,17 @@ export default function DashboardPage() {
       try {
         const result = await extractTransaction(text)
 
+        const extraction = result.extraction as AIExtractionResult
+        const missingFields = getMissingFields(extraction)
+
         const assistantMessage: ChatMessage = {
           id: `assistant-${Date.now()}`,
           role: 'assistant',
-          content: 'Detected Transaction',
-          extraction: result.extraction as AIExtractionResult,
+          content: missingFields.length > 0
+            ? `I need some more information. Please provide ${missingFields[0].label.toLowerCase()}:`
+            : 'Detected Transaction',
+          extraction,
+          missingFields,
           timestamp: new Date(),
         }
 
@@ -100,7 +190,7 @@ export default function DashboardPage() {
         setIsProcessing(false)
       }
     },
-    [input, isProcessing]
+    [input, isProcessing, getActiveExtraction, handleFieldInput]
   )
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -139,7 +229,7 @@ export default function DashboardPage() {
         }
 
         setMessages((prev) =>
-          prev.map((msg) => (msg.extraction === extraction ? { ...msg, extraction: undefined } : msg))
+          prev.map((msg) => (msg.extraction === extraction ? { ...msg, extraction: undefined, missingFields: undefined } : msg))
         )
         setMessages((prev) => [...prev, savedMessage])
       } catch (err) {
@@ -159,7 +249,7 @@ export default function DashboardPage() {
   const handleDiscard = useCallback((extraction?: AIExtractionResult) => {
     if (!extraction) return
     setMessages((prev) =>
-      prev.map((msg) => (msg.extraction === extraction ? { ...msg, extraction: undefined } : msg))
+      prev.map((msg) => (msg.extraction === extraction ? { ...msg, extraction: undefined, missingFields: undefined } : msg))
     )
   }, [])
 
@@ -246,7 +336,7 @@ export default function DashboardPage() {
               return (
                 <div key={msg.id} className="flex justify-start">
                   <div className="max-w-[85%] md:max-w-[70%]">
-                    {msg.extraction ? (
+                    {msg.extraction && (!msg.missingFields || msg.missingFields.length === 0) ? (
                       <div
                         className="relative rounded-tr-2xl rounded-br-2xl rounded-bl-2xl shadow-sm overflow-hidden"
                         style={{ backgroundColor: '#ffffff' }}
