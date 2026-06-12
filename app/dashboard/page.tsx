@@ -78,7 +78,8 @@ export default function DashboardPage() {
   const allowedApprovers = getApprovalPermissionRules(user?.role ?? null)
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+    // Ensure the latest message is visible by scrolling to bottom
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' })
   }, [messages])
 
   // Auto-resize textarea
@@ -155,16 +156,14 @@ export default function DashboardPage() {
       const remainingMissing = getMissingFields(updatedExtraction)
 
       if (remainingMissing.length === 0) {
-        // All required fields are filled; let the user confirm or discard the updated extraction.
-        setMessages((prev) =>
-          prev.map((m, i) => (i === index ? { ...m, extraction: updatedExtraction, missingFields: [] } : m))
-        )
+        // All required fields are filled; remove old message and add updated detection card at end
+        setMessages((prev) => {
+          const updatedCard = { ...msg, extraction: updatedExtraction, missingFields: [] }
+          const withoutOld = prev.filter((_, i) => i !== index)
+          return [...withoutOld, updatedCard]
+        })
       } else {
-        // Still have missing fields, ask for next one
-        setMessages((prev) =>
-          prev.map((m, i) => (i === index ? { ...m, extraction: updatedExtraction, missingFields: remainingMissing } : m))
-        )
-        // Add follow-up prompt message
+        // Still have missing fields; remove old message and add follow-up with updated extraction
         const nextField = remainingMissing[0]
         const followUpContent = nextField.field === 'transactionType'
           ? "Is this a purchase or a payment? Please reply with 'purchase' or 'payment'."
@@ -175,9 +174,13 @@ export default function DashboardPage() {
           role: 'assistant',
           content: followUpContent,
           missingFields: remainingMissing,
+          extraction: updatedExtraction,
           timestamp: new Date(),
         }
-        setMessages((prev) => [...prev, followUpMessage])
+        setMessages((prev) => {
+          const withoutOld = prev.filter((_, i) => i !== index)
+          return [...withoutOld, followUpMessage]
+        })
       }
     },
     [messages, getActiveExtraction]
@@ -195,12 +198,40 @@ export default function DashboardPage() {
         content: type === 'purchase' ? 'Purchase' : 'Payment',
         timestamp: new Date(),
       }
-      setMessages((prev) => [...prev, userChoiceMessage])
 
-      // Process the selection as if the user typed it
-      handleFieldInput(type, { field: 'transactionType', label: 'Type' })
+      // Get the current extraction and update with the type
+      const { message: msg, index } = active
+      const updatedExtraction = { ...msg.extraction!, transactionType: type } as AIExtractionResult
+      const remainingMissing = getMissingFields(updatedExtraction)
+
+      if (remainingMissing.length === 0) {
+        // All required fields are filled; add user message, then update extraction
+        setMessages((prev) => {
+          const updated = [...prev, userChoiceMessage]
+          return updated.map((m, i) => (i === index ? { ...m, extraction: updatedExtraction, missingFields: [] } : m))
+        })
+      } else {
+        // Still have missing fields; add user message and follow-up
+        const nextField = remainingMissing[0]
+        const followUpContent = `Please provide ${nextField.label.toLowerCase()}:`
+
+        const followUpMessage: ChatMessage = {
+          id: `followup-${Date.now()}`,
+          role: 'assistant',
+          content: followUpContent,
+          missingFields: remainingMissing,
+          extraction: updatedExtraction,
+          timestamp: new Date(),
+        }
+
+        setMessages((prev) => {
+          const withUserMessage = [...prev, userChoiceMessage]
+          const withoutOld = withUserMessage.filter((_, i) => i !== index)
+          return [...withoutOld, followUpMessage]
+        })
+      }
     },
-    [getActiveExtraction, handleFieldInput]
+    [messages, getActiveExtraction]
   )
 
   const handleSubmit = useCallback(
@@ -211,7 +242,54 @@ export default function DashboardPage() {
       // Check if we're responding to a follow-up prompt
       const active = getActiveExtraction()
       if (active) {
-        handleFieldInput(text, active.message.missingFields![0])
+        const missing = active.message.missingFields![0]
+        // If the next required field is the transaction type, restrict accepted inputs to exactly two options.
+        if (missing.field === 'transactionType') {
+          const lower = text.toLowerCase()
+          let inferred: 'purchase' | 'payment' | undefined
+          if (lower === 'purchase' || lower === 'payment') {
+            inferred = lower
+          } else if (lower.includes('purchase')) {
+            inferred = 'purchase'
+          } else if (lower.includes('payment')) {
+            inferred = 'payment'
+          }
+
+          if (inferred) {
+            // Add user message showing the selection
+            const userMessage: ChatMessage = {
+              id: `user-${Date.now()}`,
+              role: 'user',
+              content: inferred === 'purchase' ? 'Purchase' : 'Payment',
+              timestamp: new Date(),
+            }
+            setMessages((prev) => [...prev, userMessage])
+            handleFieldInput(inferred, missing)
+            setInput('')
+            return
+          } else {
+            // Invalid input for type; re-prompt and keep UI state intact
+            const promptMessage: ChatMessage = {
+              id: `prompt-${Date.now()}`,
+              role: 'assistant',
+              content: "Please choose one of the two options: Purchase or Payment.",
+              missingFields: [missing],
+              timestamp: new Date(),
+            }
+            setMessages((prev) => [...prev, promptMessage])
+            setInput('')
+            return
+          }
+        }
+        // Not a type field; add user message and handle normally
+        const userMessage: ChatMessage = {
+          id: `user-${Date.now()}`,
+          role: 'user',
+          content: text,
+          timestamp: new Date(),
+        }
+        setMessages((prev) => [...prev, userMessage])
+        handleFieldInput(text, missing)
         setInput('')
         return
       }
@@ -292,10 +370,12 @@ export default function DashboardPage() {
           timestamp: new Date(),
         }
 
-        setMessages((prev) =>
-          prev.map((msg) => (msg.extraction === extraction ? { ...msg, extraction: undefined, missingFields: undefined } : msg))
-        )
-        setMessages((prev) => [...prev, savedMessage])
+        setMessages((prev) => {
+          const updated = prev.map((msg) =>
+            msg.extraction === extraction ? { ...msg, extraction: undefined, missingFields: undefined } : msg
+          )
+          return [...updated, savedMessage]
+        })
       } catch (err) {
         const message = err instanceof Error ? err.message : 'Failed to save transaction'
         const errorMessage: ChatMessage = {
