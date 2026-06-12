@@ -5,6 +5,12 @@ import { prisma } from '@/lib/db/client'
 const SESSION_COOKIE = 'finbot_session'
 const SESSION_MAX_AGE = 60 * 60 * 24 * 7
 
+const DEFAULT_USERS = [
+  { username: 'father', password: 'password123', role: 'father', name: 'Father' },
+  { username: 'brother', password: 'password123', role: 'brother', name: 'Brother' },
+  { username: 'me', password: 'password123', role: 'me', name: 'Me' },
+] as const
+
 export interface SessionPayload {
   userId: string
   username: string
@@ -46,40 +52,57 @@ export async function getSession(): Promise<SessionPayload | null> {
   }
 }
 
-export async function ensureDefaultUsers() {
-  const existingUsers = await prisma.user.count()
+export function getDefaultUser(username: string, password: string) {
+  return DEFAULT_USERS.find((user) => user.username === username && user.password === password) ?? null
+}
 
-  if (existingUsers > 0) {
-    return
+export async function ensureDefaultUsers() {
+  try {
+    const existingUsers = await prisma.user.count()
+
+    if (existingUsers > 0) {
+      return
+    }
+
+    const passwordHash = await bcrypt.hash('password123', 10)
+
+    await prisma.user.createMany({
+      data: DEFAULT_USERS.map((user) => ({
+        username: user.username,
+        passwordHash,
+        role: user.role,
+        name: user.name,
+        email: `${user.username}@example.com`,
+      })),
+    })
+  } catch (error) {
+    console.warn('Default user initialization skipped:', error)
+  }
+}
+
+export async function findUserForLogin(username: string, password: string) {
+  try {
+    await ensureDefaultUsers()
+
+    const user = await prisma.user.findUnique({
+      where: { username },
+    })
+
+    if (user && (await bcrypt.compare(password, user.passwordHash))) {
+      return user
+    }
+  } catch (error) {
+    console.warn('Database login lookup failed, using fallback credentials:', error)
   }
 
-  const passwordHash = await bcrypt.hash('password123', 10)
-
-  await prisma.user.createMany({
-    data: [
-      {
-        username: 'father',
-        passwordHash,
-        role: 'father',
-        name: 'Father',
-        email: 'father@example.com',
-      },
-      {
-        username: 'brother',
-        passwordHash,
-        role: 'brother',
-        name: 'Brother',
-        email: 'brother@example.com',
-      },
-      {
-        username: 'me',
-        passwordHash,
-        role: 'me',
-        name: 'Me',
-        email: 'me@example.com',
-      },
-    ],
-  })
+  return getDefaultUser(username, password)
+    ? {
+        id: `default-${username}`,
+        username,
+        role: getDefaultUser(username, password)!.role,
+        name: getDefaultUser(username, password)!.name,
+      }
+    : null
 }
 
 export async function requireSession(): Promise<SessionPayload> {

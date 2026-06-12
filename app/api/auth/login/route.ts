@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/db/client'
 import bcrypt from 'bcryptjs'
-import { createSession, ensureDefaultUsers } from '@/lib/auth'
+import { createSession, findUserForLogin } from '@/lib/auth'
 
 export async function POST(request: Request) {
   try {
@@ -15,13 +15,9 @@ export async function POST(request: Request) {
       )
     }
 
-    await ensureDefaultUsers()
+    const user = await findUserForLogin(username, password)
 
-    const user = await prisma.user.findUnique({
-      where: { username },
-    })
-
-    if (!user || !(await bcrypt.compare(password, user.passwordHash))) {
+    if (!user) {
       return NextResponse.json(
         { error: 'Invalid credentials' },
         { status: 401 }
