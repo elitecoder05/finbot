@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/db/client'
 import bcrypt from 'bcryptjs'
-import { createSession } from '@/lib/auth'
+import { createSession, ensureDefaultUsers } from '@/lib/auth'
 
 export async function POST(request: Request) {
   try {
@@ -14,6 +14,8 @@ export async function POST(request: Request) {
         { status: 400 }
       )
     }
+
+    await ensureDefaultUsers()
 
     const user = await prisma.user.findUnique({
       where: { username },

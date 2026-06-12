@@ -1,4 +1,6 @@
 import { cookies } from 'next/headers'
+import bcrypt from 'bcryptjs'
+import { prisma } from '@/lib/db/client'
 
 const SESSION_COOKIE = 'finbot_session'
 const SESSION_MAX_AGE = 60 * 60 * 24 * 7
@@ -42,6 +44,42 @@ export async function getSession(): Promise<SessionPayload | null> {
   } catch {
     return null
   }
+}
+
+export async function ensureDefaultUsers() {
+  const existingUsers = await prisma.user.count()
+
+  if (existingUsers > 0) {
+    return
+  }
+
+  const passwordHash = await bcrypt.hash('password123', 10)
+
+  await prisma.user.createMany({
+    data: [
+      {
+        username: 'father',
+        passwordHash,
+        role: 'father',
+        name: 'Father',
+        email: 'father@example.com',
+      },
+      {
+        username: 'brother',
+        passwordHash,
+        role: 'brother',
+        name: 'Brother',
+        email: 'brother@example.com',
+      },
+      {
+        username: 'me',
+        passwordHash,
+        role: 'me',
+        name: 'Me',
+        email: 'me@example.com',
+      },
+    ],
+  })
 }
 
 export async function requireSession(): Promise<SessionPayload> {
