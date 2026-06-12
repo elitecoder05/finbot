@@ -102,16 +102,31 @@ export default function DashboardPage() {
 
   const createAndAppendExtractionMessage = useCallback(async (segmentText: string) => {
     const result = await extractTransaction(segmentText)
-
     const extraction = result.extraction as AIExtractionResult
+
+    // Simple heuristic: if the user text doesn't contain purchase/payment keywords,
+    // consider the transaction type unspecified and follow up for it.
+    const purchaseKeywords = ['bought', 'purchased', 'brought', 'buy', 'ordered', 'placed order']
+    const paymentKeywords = ['paid', 'payment', 'gave', 'give', 'rent', 'salary', 'wages', 'labor', 'charges', 'bill', 'fee', 'tax', 'advance', 'refund', 'returned', 'sent', 'transferred']
+    const lower = segmentText.toLowerCase()
+    const explicitTypeMentioned = purchaseKeywords.some((k) => lower.includes(k)) || paymentKeywords.some((k) => lower.includes(k))
+
     const missingFields = getMissingFields(extraction)
+    if (!explicitTypeMentioned && !missingFields.some((f) => f.field === 'transactionType')) {
+      // Prepend type follow-up so it's asked first
+      missingFields.unshift({ field: 'transactionType', label: 'Type' })
+    }
+
+    const assistantContent = missingFields.length > 0
+      ? (missingFields[0].field === 'transactionType'
+          ? "Is this a purchase or a payment? Please reply with 'purchase' or 'payment'."
+          : `I need some more information. Please provide ${missingFields[0].label.toLowerCase()}:`)
+      : 'Detected Transaction'
 
     const assistantMessage: ChatMessage = {
       id: `assistant-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
       role: 'assistant',
-      content: missingFields.length > 0
-        ? `I need some more information. Please provide ${missingFields[0].label.toLowerCase()}:`
-        : 'Detected Transaction',
+      content: assistantContent,
       extraction,
       missingFields,
       timestamp: new Date(),
@@ -151,16 +166,41 @@ export default function DashboardPage() {
         )
         // Add follow-up prompt message
         const nextField = remainingMissing[0]
+        const followUpContent = nextField.field === 'transactionType'
+          ? "Is this a purchase or a payment? Please reply with 'purchase' or 'payment'."
+          : `Please provide ${nextField.label.toLowerCase()}:`
+
         const followUpMessage: ChatMessage = {
           id: `followup-${Date.now()}`,
           role: 'assistant',
-          content: `Please provide ${nextField.label.toLowerCase()}:`,
+          content: followUpContent,
+          missingFields: remainingMissing,
           timestamp: new Date(),
         }
         setMessages((prev) => [...prev, followUpMessage])
       }
     },
     [messages, getActiveExtraction]
+  )
+
+  const handleTypeSelect = useCallback(
+    (type: 'purchase' | 'payment') => {
+      const active = getActiveExtraction()
+      if (!active) return
+
+      // Add a user message showing the selection
+      const userChoiceMessage: ChatMessage = {
+        id: `user-type-${Date.now()}`,
+        role: 'user',
+        content: type === 'purchase' ? 'Purchase' : 'Payment',
+        timestamp: new Date(),
+      }
+      setMessages((prev) => [...prev, userChoiceMessage])
+
+      // Process the selection as if the user typed it
+      handleFieldInput(type, { field: 'transactionType', label: 'Type' })
+    },
+    [getActiveExtraction, handleFieldInput]
   )
 
   const handleSubmit = useCallback(
@@ -394,6 +434,26 @@ export default function DashboardPage() {
                           FinBot
                         </span>
                         <p className="mt-0.5 break-all leading-relaxed whitespace-pre-line">{msg.content}</p>
+                        {msg.missingFields && msg.missingFields.length > 0 && msg.missingFields[0].field === 'transactionType' && (
+                          <div className="mt-2 flex gap-2">
+                            <button
+                              type="button"
+                              onClick={() => handleTypeSelect('purchase')}
+                              className="rounded-full px-4 py-1.5 text-sm font-medium text-white transition-opacity hover:opacity-90"
+                              style={{ backgroundColor: '#25D366' }}
+                            >
+                              Purchase
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleTypeSelect('payment')}
+                              className="rounded-full px-4 py-1.5 text-sm font-medium text-white transition-opacity hover:opacity-90"
+                              style={{ backgroundColor: '#3b82f6' }}
+                            >
+                              Payment
+                            </button>
+                          </div>
+                        )}
                         <div className="mt-1 flex justify-end">
                           <span className="text-[11px]" style={{ color: '#6b7280' }}>
                             {formatTime(msg.timestamp)}
