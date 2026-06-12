@@ -146,8 +146,8 @@ export function ExtractionCard({
   return (
     <div className="px-3 pt-3 pb-1">
       <div className="mb-2 flex items-center justify-between">
-        <span className="text-xs font-semibold text-green-600">🧾 Detected Transaction</span>
-        <span className="text-xs text-gray-500">
+        <span className="text-xs font-semibold" style={{ color: '#16a34a' }}>🧾 Detected Transaction</span>
+        <span className="text-xs" style={{ color: '#6b7280' }}>
           {(confidence ?? extraction.confidence ?? 0) > 0 ? `${((confidence ?? extraction.confidence ?? 0) * 100).toFixed(0)}% confidence` : ''}
         </span>
       </div>
@@ -157,12 +157,13 @@ export function ExtractionCard({
           {isEditing ? (
             <input
               type="number"
-              className="mt-1 w-full rounded-md border border-zinc-300 bg-white px-2 py-1 text-sm dark:border-zinc-700 dark:bg-zinc-900"
+              className="mt-1 w-full rounded-md border bg-white px-2 py-1 text-sm"
+              style={{ borderColor: '#d1d5db', color: '#111827' }}
               value={edited.amount ?? ''}
               onChange={(e) => handleChange('amount', e.target.value ? parseFloat(e.target.value) : null)}
             />
           ) : (
-            <p className="mt-1 text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+            <p className="mt-1 text-sm font-semibold" style={{ color: '#111827' }}>
               {extraction.amount != null ? `₹${extraction.amount.toLocaleString('en-IN')}` : '—'}
             </p>
           )}
@@ -171,7 +172,8 @@ export function ExtractionCard({
         <Field label="Type">
           {isEditing ? (
             <select
-              className="mt-1 w-full rounded-md border border-zinc-300 bg-white px-2 py-1 text-sm dark:border-zinc-700 dark:bg-zinc-900"
+              className="mt-1 w-full rounded-md border bg-white px-2 py-1 text-sm"
+              style={{ borderColor: '#d1d5db', color: '#111827' }}
               value={edited.transactionType}
               onChange={(e) => handleChange('transactionType', e.target.value as AIExtractionResult['transactionType'])}
             >
@@ -180,7 +182,7 @@ export function ExtractionCard({
               ))}
             </select>
           ) : (
-            <p className="mt-1 text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+            <p className="mt-1 text-sm font-semibold" style={{ color: '#111827' }}>
               {TRANSACTION_TYPE_LABELS[extraction.transactionType] ?? extraction.transactionType}
             </p>
           )}
@@ -189,12 +191,13 @@ export function ExtractionCard({
         <Field label="Product">
           {isEditing ? (
             <input
-              className="mt-1 w-full rounded-md border border-zinc-300 bg-white px-2 py-1 text-sm dark:border-zinc-700 dark:bg-zinc-900"
+              className="mt-1 w-full rounded-md border bg-white px-2 py-1 text-sm"
+              style={{ borderColor: '#d1d5db', color: '#111827' }}
               value={edited.product ?? ''}
               onChange={(e) => handleChange('product', e.target.value || null)}
             />
           ) : (
-            <p className="mt-1 text-sm text-zinc-900 dark:text-zinc-100">{extraction.product ?? '—'}</p>
+            <p className="mt-1 text-sm" style={{ color: '#111827' }}>{extraction.product ?? '—'}</p>
           )}
         </Field>
 
@@ -203,7 +206,8 @@ export function ExtractionCard({
             <div className="relative">
               <input
                 ref={personInputRef}
-                className="mt-1 w-full rounded-md border border-zinc-300 bg-white px-2 py-1 text-sm dark:border-zinc-700 dark:bg-zinc-900"
+                className="mt-1 w-full rounded-md border bg-white px-2 py-1 text-sm"
+                style={{ borderColor: '#d1d5db', color: '#111827' }}
                 value={edited.person ?? ''}
                 onChange={(e) => handleChange('person', e.target.value || null)}
                 onFocus={() => {
@@ -214,25 +218,27 @@ export function ExtractionCard({
                 placeholder="Type to search persons..."
               />
               {personSearchLoading && (
-                <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-zinc-400">...</span>
+                <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs" style={{ color: '#9ca3af' }}>...</span>
               )}
 
               {/* Suggestions dropdown */}
               {showPersonSuggestions && personSuggestions.length > 0 && (
                 <div
                   ref={suggestionsRef}
-                  className="absolute left-0 right-0 top-full z-50 mt-1 max-h-40 overflow-y-auto rounded-md border border-zinc-200 bg-white shadow-lg dark:border-zinc-700 dark:bg-zinc-900"
+                  className="absolute left-0 right-0 top-full z-50 mt-1 max-h-40 overflow-y-auto rounded-md border bg-white shadow-lg"
+                  style={{ borderColor: '#e5e7eb' }}
                 >
                   {personSuggestions.map((party) => (
                     <button
                       key={party.id}
                       type="button"
                       onClick={() => selectPerson(party.name)}
-                      className="flex w-full items-center justify-between px-3 py-2 text-left text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                      className="flex w-full items-center justify-between px-3 py-2 text-left text-sm"
+                      style={{ color: '#111827' }}
                     >
                       <span>{party.name}</span>
                       {party.score && party.score < 0.9 && (
-                        <span className="text-xs text-zinc-400">
+                        <span className="text-xs" style={{ color: '#9ca3af' }}>
                           {Math.round(party.score * 100)}% match
                         </span>
                       )}
@@ -243,8 +249,11 @@ export function ExtractionCard({
 
               {/* New person prompt */}
               {showNewPersonPrompt && !showPersonSuggestions && (
-                <div className="absolute left-0 right-0 top-full z-50 mt-1 rounded-md border border-amber-200 bg-amber-50 p-2 dark:border-amber-800 dark:bg-amber-950">
-                  <p className="text-xs text-amber-800 dark:text-amber-200">
+                <div
+                  className="absolute left-0 right-0 top-full z-50 mt-1 rounded-md border p-2"
+                  style={{ borderColor: '#fde68a', backgroundColor: '#fffbeb' }}
+                >
+                  <p className="text-xs" style={{ color: '#92400e' }}>
                     Person not found. Add <strong>"{newPersonName}"</strong> to the list?
                   </p>
                   <div className="mt-2 flex gap-2">
@@ -252,14 +261,16 @@ export function ExtractionCard({
                       type="button"
                       onClick={addNewPerson}
                       disabled={addingPerson}
-                      className="rounded-md bg-amber-600 px-3 py-1 text-xs text-white hover:bg-amber-700 disabled:opacity-50"
+                      className="rounded-md px-3 py-1 text-xs text-white disabled:opacity-50"
+                      style={{ backgroundColor: '#d97706' }}
                     >
                       {addingPerson ? 'Adding...' : 'Add Person'}
                     </button>
                     <button
                       type="button"
                       onClick={() => setShowNewPersonPrompt(false)}
-                      className="rounded-md border border-amber-300 px-3 py-1 text-xs text-amber-700 hover:bg-amber-100 dark:border-amber-700 dark:text-amber-300"
+                      className="rounded-md border px-3 py-1 text-xs"
+                      style={{ borderColor: '#fcd34d', color: '#b45309' }}
                     >
                       Cancel
                     </button>
@@ -268,7 +279,7 @@ export function ExtractionCard({
               )}
             </div>
           ) : (
-            <p className="mt-1 text-sm text-zinc-900 dark:text-zinc-100">{extraction.person ?? '—'}</p>
+            <p className="mt-1 text-sm" style={{ color: '#111827' }}>{extraction.person ?? '—'}</p>
           )}
         </Field>
 
@@ -276,12 +287,13 @@ export function ExtractionCard({
           {isEditing ? (
             <input
               type="number"
-              className="mt-1 w-full rounded-md border border-zinc-300 bg-white px-2 py-1 text-sm dark:border-zinc-700 dark:bg-zinc-900"
+              className="mt-1 w-full rounded-md border bg-white px-2 py-1 text-sm"
+              style={{ borderColor: '#d1d5db', color: '#111827' }}
               value={edited.quantity ?? ''}
               onChange={(e) => handleChange('quantity', e.target.value ? parseFloat(e.target.value) : null)}
             />
           ) : (
-            <p className="mt-1 text-sm text-zinc-900 dark:text-zinc-100">
+            <p className="mt-1 text-sm" style={{ color: '#111827' }}>
               {extraction.quantity != null ? `${extraction.quantity} ${extraction.unit ?? ''}`.trim() : '—'}
             </p>
           )}
@@ -290,18 +302,19 @@ export function ExtractionCard({
         <Field label="Notes">
           {isEditing ? (
             <textarea
-              className="mt-1 w-full rounded-md border border-zinc-300 bg-white px-2 py-1 text-sm dark:border-zinc-700 dark:bg-zinc-900"
+              className="mt-1 w-full rounded-md border bg-white px-2 py-1 text-sm"
+              style={{ borderColor: '#d1d5db', color: '#111827' }}
               value={edited.notes ?? ''}
               onChange={(e) => handleChange('notes', e.target.value || null)}
               rows={2}
             />
           ) : (
-            <p className="mt-1 text-sm text-zinc-900 dark:text-zinc-100">{extraction.notes ?? '—'}</p>
+            <p className="mt-1 text-sm" style={{ color: '#111827' }}>{extraction.notes ?? '—'}</p>
           )}
         </Field>
       </div>
 
-      <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-zinc-100 pt-2">
+      <div className="mt-3 flex flex-wrap items-center gap-2 border-t pt-2" style={{ borderColor: '#e5e7eb' }}>
         {isEditing ? (
           <>
             <button
@@ -319,7 +332,8 @@ export function ExtractionCard({
                 setIsEditing(false)
                 setEdited(extraction)
               }}
-              className="rounded-full border border-zinc-300 px-4 py-1.5 text-sm text-zinc-600"
+              className="rounded-full border px-4 py-1.5 text-sm"
+              style={{ borderColor: '#d1d5db', color: '#374151' }}
             >
               Cancel
             </button>
@@ -339,7 +353,8 @@ export function ExtractionCard({
               <button
                 type="button"
                 onClick={() => setIsEditing(true)}
-                className="rounded-full border border-zinc-300 px-4 py-1.5 text-sm text-zinc-600"
+                className="rounded-full border px-4 py-1.5 text-sm"
+                style={{ borderColor: '#d1d5db', color: '#374151' }}
               >
                 Edit
               </button>
@@ -348,7 +363,8 @@ export function ExtractionCard({
               <button
                 type="button"
                 onClick={onCancel}
-                className="rounded-full px-4 py-1.5 text-sm text-red-500"
+                className="rounded-full px-4 py-1.5 text-sm"
+                style={{ color: '#ef4444' }}
               >
                 Discard
               </button>
@@ -363,7 +379,7 @@ export function ExtractionCard({
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
-      <span className="text-xs text-zinc-500">{label}</span>
+      <span className="text-xs" style={{ color: '#6b7280' }}>{label}</span>
       {children}
     </div>
   )

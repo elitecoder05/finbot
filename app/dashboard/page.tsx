@@ -167,7 +167,7 @@ export default function DashboardPage() {
     return (
       <div className="flex h-screen flex-col bg-gray-50">
         <div className="flex h-14 items-center px-4 border-b border-gray-200 bg-white">
-          <span className="text-sm text-gray-500">Loading...</span>
+          <span className="text-sm" style={{ color: '#6b7280' }}>Loading...</span>
         </div>
       </div>
     )
@@ -186,7 +186,7 @@ export default function DashboardPage() {
           {/* Empty state: sample prompts */}
           {messages.length === 0 && !isProcessing && (
             <div className="flex flex-col items-center gap-4 py-8">
-              <p className="text-sm text-center text-gray-500">
+              <p className="text-sm text-center" style={{ color: '#6b7280' }}>
                 Try typing a transaction below, or tap one of these examples:
               </p>
 
@@ -214,7 +214,8 @@ export default function DashboardPage() {
                   <div key={msg.id} className="flex justify-end">
                     <div className="max-w-[75%] md:max-w-[60%]">
                       <div
-                        className="relative rounded-tl-2xl rounded-bl-2xl rounded-br-2xl px-3 py-2 text-sm shadow-sm bg-green-100 text-gray-900"
+                        className="relative rounded-tl-2xl rounded-bl-2xl rounded-br-2xl px-3 py-2 text-sm shadow-sm"
+                        style={{ backgroundColor: '#dcfce7', color: '#111827' }}
                       >
                         <p className="break-all leading-relaxed">{msg.content}</p>
                         <div className="mt-1 flex items-center justify-end gap-1">
@@ -232,7 +233,8 @@ export default function DashboardPage() {
                 return (
                   <div key={msg.id} className="flex justify-center py-1">
                     <span
-                      className="rounded-lg px-3 py-1.5 text-xs bg-red-100 text-red-800"
+                      className="rounded-lg px-3 py-1.5 text-xs"
+                      style={{ backgroundColor: '#fee2e2', color: '#991b1b' }}
                     >
                       {msg.content}
                     </span>
@@ -246,7 +248,8 @@ export default function DashboardPage() {
                   <div className="max-w-[85%] md:max-w-[70%]">
                     {msg.extraction ? (
                       <div
-                        className="relative rounded-tr-2xl rounded-br-2xl rounded-bl-2xl shadow-sm overflow-hidden bg-white"
+                        className="relative rounded-tr-2xl rounded-br-2xl rounded-bl-2xl shadow-sm overflow-hidden"
+                        style={{ backgroundColor: '#ffffff' }}
                       >
                         <ExtractionCard
                           extraction={msg.extraction}
@@ -262,22 +265,23 @@ export default function DashboardPage() {
                           onCancel={() => handleDiscard(msg.extraction)}
                         />
                         <div className="px-3 pb-2 flex justify-end">
-                          <span className="text-[11px] text-gray-500">
+                          <span className="text-[11px]" style={{ color: '#6b7280' }}>
                             {formatTime(msg.timestamp)}
                           </span>
                         </div>
                       </div>
                     ) : (
                       <div
-                        className="relative rounded-tr-2xl rounded-br-2xl rounded-bl-2xl px-3 py-2 text-sm shadow-sm bg-white text-gray-900"
+                        className="relative rounded-tr-2xl rounded-br-2xl rounded-bl-2xl px-3 py-2 text-sm shadow-sm"
+                        style={{ backgroundColor: '#ffffff', color: '#111827' }}
                       >
                         {/* Bot label */}
-                        <span className="text-xs font-semibold text-green-600">
+                        <span className="text-xs font-semibold" style={{ color: '#16a34a' }}>
                           FinBot
                         </span>
                         <p className="mt-0.5 break-all leading-relaxed whitespace-pre-line">{msg.content}</p>
                         <div className="mt-1 flex justify-end">
-                          <span className="text-[11px] text-gray-500">
+                          <span className="text-[11px]" style={{ color: '#6b7280' }}>
                             {formatTime(msg.timestamp)}
                           </span>
                         </div>
@@ -321,7 +325,7 @@ export default function DashboardPage() {
             className="mb-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition-colors hover:bg-gray-100"
             title="Attach file"
           >
-            <Paperclip size={20} className="text-gray-500" />
+            <Paperclip size={20} style={{ color: '#6b7280' }} />
           </button>
 
           <div className="flex flex-1 items-end rounded-3xl px-4 py-2 bg-gray-100">
