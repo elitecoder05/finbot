@@ -267,7 +267,7 @@ export default function AnalyticsPage() {
     try {
       // 1. Fetch merged transactions (both database and local localStorage)
       const txData = await fetchTransactions()
-      const allTx = txData?.transactions || []
+      const allTx = (txData?.transactions || []) as any[]
 
       // 2. Extract persons from transactions to ensure we have parties even if API fails or for local transactions
       const localPersons = Array.from(new Set(allTx.map(tx => tx.person?.trim()).filter(Boolean))) as string[]
@@ -333,7 +333,7 @@ export default function AnalyticsPage() {
     try {
       // 1. Fetch merged transactions
       const txData = await fetchTransactions()
-      const allTx = txData?.transactions || []
+      const allTx = (txData?.transactions || []) as any[]
 
       // 2. Try fetching ledger from API
       let ledgerJson: LedgerData | null = null

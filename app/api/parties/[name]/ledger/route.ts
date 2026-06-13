@@ -7,10 +7,10 @@ export async function GET(
   request: Request,
   { params }: { params: Promise<{ name: string }> }
 ) {
+  const { name } = await params
+  const decodedName = decodeURIComponent(name)
   try {
     await requireSession()
-    const { name } = await params
-    const decodedName = decodeURIComponent(name)
 
     const { searchParams } = new URL(request.url)
     const range = searchParams.get('range') || 'all'
