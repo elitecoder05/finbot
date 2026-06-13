@@ -37,8 +37,8 @@ export async function GET(request: Request) {
 
     return NextResponse.json({ parties })
   } catch (error) {
-    console.error('/api/parties GET error:', error)
-    return NextResponse.json({ error: 'Failed to fetch parties' }, { status: 500 })
+    console.warn('/api/parties GET error, falling back to empty list:', error)
+    return NextResponse.json({ parties: [] })
   }
 }
 

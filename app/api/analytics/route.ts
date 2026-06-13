@@ -23,12 +23,13 @@ export async function GET(request: Request) {
         _count: { _all: true },
       }),
       prisma.$queryRaw<{ month: string; total: number; count: number }[]>`
-        SELECT strftime('%Y-%m', date) as month, SUM(amount) as total, COUNT(*) as count
+        SELECT TO_CHAR(date, 'YYYY-MM') as month, SUM(amount) as total, COUNT(*) as count
         FROM "Transaction"
         WHERE status = 'approved' AND date >= ${startDate.toISOString()}
-        GROUP BY strftime('%Y-%m', date)
+        GROUP BY TO_CHAR(date, 'YYYY-MM')
         ORDER BY month ASC
       `,
+
       prisma.transaction.groupBy({
         by: ['person'],
         where: { status: 'approved', date: { gte: startDate }, person: { not: '' } },

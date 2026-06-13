@@ -94,7 +94,16 @@ export async function GET(
       summary,
     })
   } catch (error) {
-    console.error('/api/parties/[name]/ledger GET error:', error)
-    return NextResponse.json({ error: 'Failed to load ledger' }, { status: 500 })
+    console.warn('/api/parties/[name]/ledger GET error, falling back to empty ledger:', error)
+    return NextResponse.json({
+      person: decodedName,
+      transactions: [],
+      summary: {
+        totalPurchases: 0,
+        totalPayments: 0,
+        transactionCount: 0,
+        finalBalance: 0,
+      }
+    })
   }
 }

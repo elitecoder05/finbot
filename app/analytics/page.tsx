@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState, useRef } from 'react'
 import { useAuth } from '@/components/providers/auth'
 import { TopBar } from '@/components/layout/top-bar'
 import { Sidebar } from '@/components/layout/sidebar'
+import { fetchTransactions } from '@/lib/api/transactions'
 
 type TimeRange = '7d' | '30d' | '90d' | '1y' | 'all'
 
@@ -59,6 +60,190 @@ const RANGES: { value: TimeRange; label: string }[] = [
   { value: 'all', label: 'All time' },
 ]
 
+function computeAnalyticsFromTransactions(transactions: any[], range: TimeRange): AnalyticsData {
+  const now = new Date()
+  let startDate: Date
+  if (range === '7d') startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
+  else if (range === '90d') startDate = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000)
+  else if (range === '1y') startDate = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000)
+  else startDate = new Date(0) // all time
+
+  const isWithinRange = (dateStr: string | Date) => {
+    if (range === 'all') return true
+    const d = new Date(dateStr)
+    return d >= startDate
+  }
+
+  // Filter approved transactions within range
+  const approvedTx = transactions.filter(tx => tx.status === 'approved' && isWithinRange(tx.date))
+
+  // 1. typeSummary
+  const typeMap: Record<string, { amount: number; count: number }> = {}
+  approvedTx.forEach(tx => {
+    const type = tx.transactionType || 'purchase'
+    if (!typeMap[type]) typeMap[type] = { amount: 0, count: 0 }
+    typeMap[type].amount += tx.amount || 0
+    typeMap[type].count += 1
+  })
+  const typeSummary = Object.entries(typeMap).map(([transactionType, stats]) => ({
+    transactionType,
+    _sum: { amount: stats.amount },
+    _count: { _all: stats.count }
+  }))
+
+  // 2. monthlyTrends
+  const monthlyMap: Record<string, { total: number; count: number }> = {}
+  approvedTx.forEach(tx => {
+    const d = new Date(tx.date)
+    const month = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+    if (!monthlyMap[month]) monthlyMap[month] = { total: 0, count: 0 }
+    monthlyMap[month].total += tx.amount || 0
+    monthlyMap[month].count += 1
+  })
+  const monthlyTrends = Object.entries(monthlyMap)
+    .map(([month, stats]) => ({
+      month,
+      total: stats.total,
+      count: stats.count
+    }))
+    .sort((a, b) => a.month.localeCompare(b.month))
+
+  // 3. personSummary
+  const personMap: Record<string, { amount: number; count: number }> = {}
+  approvedTx.forEach(tx => {
+    if (!tx.person) return
+    const person = tx.person.trim()
+    if (!person) return
+    if (!personMap[person]) personMap[person] = { amount: 0, count: 0 }
+    personMap[person].amount += tx.amount || 0
+    personMap[person].count += 1
+  })
+  const personSummary = Object.entries(personMap)
+    .map(([person, stats]) => ({
+      person,
+      _sum: { amount: stats.amount },
+      _count: { _all: stats.count }
+    }))
+    .sort((a, b) => (b._sum.amount || 0) - (a._sum.amount || 0))
+    .slice(0, 10)
+
+  // 4. productSummary
+  const productMap: Record<string, { amount: number; count: number }> = {}
+  approvedTx.forEach(tx => {
+    if (!tx.product) return
+    const product = tx.product.trim()
+    if (!product) return
+    if (!productMap[product]) productMap[product] = { amount: 0, count: 0 }
+    productMap[product].amount += tx.amount || 0
+    productMap[product].count += 1
+  })
+  const productSummary = Object.entries(productMap)
+    .map(([product, stats]) => ({
+      product,
+      _sum: { amount: stats.amount },
+      _count: { _all: stats.count }
+    }))
+    .sort((a, b) => (b._sum.amount || 0) - (a._sum.amount || 0))
+    .slice(0, 10)
+
+  // 5. approvalMetrics (all time, not range filtered, as per server-side implementation)
+  const metricsMap: Record<string, { amount: number; count: number }> = {}
+  transactions.forEach(tx => {
+    const status = tx.status || 'pending'
+    if (!metricsMap[status]) metricsMap[status] = { amount: 0, count: 0 }
+    metricsMap[status].amount += tx.amount || 0
+    metricsMap[status].count += 1
+  })
+  const approvalMetrics = Object.entries(metricsMap).map(([status, stats]) => ({
+    status,
+    _sum: { amount: stats.amount },
+    _count: { _all: stats.count }
+  }))
+
+  return {
+    range,
+    startDate: startDate.toISOString(),
+    typeSummary,
+    monthlyTrends,
+    personSummary,
+    productSummary,
+    approvalMetrics
+  }
+}
+
+function computeLedgerFromTransactions(transactions: any[], personName: string, range: TimeRange): LedgerData {
+  const now = new Date()
+  let startDate: Date
+  if (range === '7d') startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
+  else if (range === '30d') startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
+  else if (range === '90d') startDate = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000)
+  else if (range === '1y') startDate = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000)
+  else startDate = new Date(0) // all time
+
+  const isWithinRange = (dateStr: string | Date) => {
+    if (range === 'all') return true
+    const d = new Date(dateStr)
+    return d >= startDate
+  }
+
+  // Filter transactions for this person, sorted chronologically (date asc)
+  const personTx = transactions
+    .filter(tx => tx.person && tx.person.trim().toLowerCase() === personName.trim().toLowerCase())
+    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+
+  // Calculate full running balance over all time, or over the range?
+  // Let's do range filter first because that matches how the server filters transactions before calculating running balance
+  const filteredPersonTx = personTx.filter(tx => isWithinRange(tx.date))
+
+  let runningBalance = 0
+  const filteredEntries = filteredPersonTx.map((tx) => {
+    let credit = 0
+    let debit = 0
+
+    if (tx.transactionType === 'purchase') {
+      debit = tx.amount
+      runningBalance -= tx.amount
+    } else if (tx.transactionType === 'payment') {
+      credit = tx.amount
+      runningBalance += tx.amount
+    }
+
+    return {
+      id: tx.id,
+      date: typeof tx.date === 'string' ? tx.date : tx.date.toISOString(),
+      transactionType: tx.transactionType,
+      amount: tx.amount,
+      product: tx.product || null,
+      quantity: tx.quantity || null,
+      unit: tx.unit || null,
+      notes: tx.notes || null,
+      status: tx.status,
+      credit,
+      debit,
+      balance: runningBalance,
+      createdBy: tx.createdBy || { id: 'unknown', name: 'Unknown', role: 'me' },
+      approvedBy: tx.approvedBy || null,
+    }
+  })
+
+  const summary = {
+    totalPurchases: filteredPersonTx
+      .filter((t) => t.transactionType === 'purchase')
+      .reduce((sum, t) => sum + t.amount, 0),
+    totalPayments: filteredPersonTx
+      .filter((t) => t.transactionType === 'payment')
+      .reduce((sum, t) => sum + t.amount, 0),
+    transactionCount: filteredPersonTx.length,
+    finalBalance: runningBalance,
+  }
+
+  return {
+    person: personName,
+    transactions: filteredEntries,
+    summary,
+  }
+}
+
 export default function AnalyticsPage() {
   const { user, isLoading: authLoading } = useAuth()
   const [data, setData] = useState<AnalyticsData | null>(null)
@@ -80,10 +265,60 @@ export default function AnalyticsPage() {
     setLoading(true)
     setError(null)
     try {
-      const res = await fetch(`/api/analytics?range=${range}`)
-      if (!res.ok) throw new Error('Failed to load analytics')
-      const json = await res.json()
-      setData(json as AnalyticsData)
+      // 1. Fetch merged transactions (both database and local localStorage)
+      const txData = await fetchTransactions()
+      const allTx = txData?.transactions || []
+
+      // 2. Extract persons from transactions to ensure we have parties even if API fails or for local transactions
+      const localPersons = Array.from(new Set(allTx.map(tx => tx.person?.trim()).filter(Boolean))) as string[]
+      const localParties = localPersons.map((name, index) => ({
+        id: `local-party-${index}-${name}`,
+        name,
+        type: 'person'
+      }))
+
+      // Try fetching parties from API, merge with extracted ones
+      try {
+        const partiesRes = await fetch('/api/parties')
+        if (partiesRes.ok) {
+          const partiesJson = await partiesRes.json()
+          const apiParties = partiesJson.parties || []
+          
+          const mergedPartiesMap = new Map<string, Party>()
+          localParties.forEach(p => mergedPartiesMap.set(p.name.toLowerCase(), p))
+          apiParties.forEach((p: Party) => mergedPartiesMap.set(p.name.toLowerCase(), p))
+          
+          setParties(Array.from(mergedPartiesMap.values()).sort((a, b) => a.name.localeCompare(b.name)))
+        } else {
+          setParties(localParties.sort((a, b) => a.name.localeCompare(b.name)))
+        }
+      } catch {
+        setParties(localParties.sort((a, b) => a.name.localeCompare(b.name)))
+      }
+
+      // 3. Try to fetch analytics from API
+      let analyticsData: AnalyticsData | null = null
+      try {
+        const res = await fetch(`/api/analytics?range=${range}`)
+        if (res.ok) {
+          analyticsData = await res.json()
+        }
+      } catch (err) {
+        // Silently catch and use client-side computation
+      }
+
+      // If analytics API failed or returned empty arrays (fallback mode),
+      // or if we have local transactions, we should compute or merge them.
+      // Computing fully on client-side from the merged transactions list is the safest
+      // and most accurate way to reflect local transactions!
+      const hasLocalTransactions = allTx.some(tx => tx.id.startsWith('local-'))
+      
+      if (!analyticsData || analyticsData.typeSummary.length === 0 || hasLocalTransactions) {
+        const computed = computeAnalyticsFromTransactions(allTx, range)
+        setData(computed)
+      } else {
+        setData(analyticsData)
+      }
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to load analytics'
       setError(message)
@@ -92,26 +327,33 @@ export default function AnalyticsPage() {
     }
   }, [range])
 
-  const loadParties = useCallback(async () => {
-    try {
-      const res = await fetch('/api/parties')
-      if (res.ok) {
-        const json = await res.json()
-        setParties(json.parties || [])
-      }
-    } catch {
-      // silently fail
-    }
-  }, [])
-
   const loadLedger = useCallback(async (personName: string) => {
     setLedgerLoading(true)
     setLedgerError(null)
     try {
-      const res = await fetch(`/api/parties/${encodeURIComponent(personName)}/ledger?range=${range}`)
-      if (!res.ok) throw new Error('Failed to load ledger')
-      const json = await res.json()
-      setLedgerData(json as LedgerData)
+      // 1. Fetch merged transactions
+      const txData = await fetchTransactions()
+      const allTx = txData?.transactions || []
+
+      // 2. Try fetching ledger from API
+      let ledgerJson: LedgerData | null = null
+      try {
+        const res = await fetch(`/api/parties/${encodeURIComponent(personName)}/ledger?range=${range}`)
+        if (res.ok) {
+          ledgerJson = await res.json()
+        }
+      } catch (err) {
+        // Silently catch and use client-side computation
+      }
+
+      const hasLocalTransactions = allTx.some(tx => tx.id.startsWith('local-'))
+
+      if (!ledgerJson || ledgerJson.transactions.length === 0 || hasLocalTransactions) {
+        const computed = computeLedgerFromTransactions(allTx, personName, range)
+        setLedgerData(computed)
+      } else {
+        setLedgerData(ledgerJson)
+      }
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to load ledger'
       setLedgerError(message)
@@ -123,9 +365,8 @@ export default function AnalyticsPage() {
   useEffect(() => {
     if (!authLoading && user) {
       loadAnalytics()
-      loadParties()
     }
-  }, [authLoading, user, loadAnalytics, loadParties])
+  }, [authLoading, user, loadAnalytics])
 
   useEffect(() => {
     if (selectedPerson) {
