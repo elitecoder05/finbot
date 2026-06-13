@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/db/client'
-import { createSession } from '@/lib/auth'
+import { encodeSession, setSessionCookie } from '@/lib/auth'
 
 export async function POST(request: Request) {
   try {
@@ -19,12 +19,12 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'User not found for role' }, { status: 404 })
     }
 
-    await createSession(user)
-
-    return NextResponse.json({
+    const encoded = encodeSession(user)
+    const response = NextResponse.json({
       ok: true,
       user: { id: user.id, username: user.username, name: user.name, role: user.role },
     })
+    return setSessionCookie(response, encoded)
   } catch (error) {
     console.error('Role switch error:', error)
     return NextResponse.json({ error: 'Failed to switch role' }, { status: 500 })

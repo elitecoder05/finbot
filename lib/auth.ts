@@ -1,3 +1,4 @@
+import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import bcrypt from 'bcryptjs'
 import { prisma } from '@/lib/db/client'
@@ -18,27 +19,30 @@ export interface SessionPayload {
   name: string
 }
 
-export async function createSession(user: { id: string; username: string; role: string; name: string }) {
+export function encodeSession(user: { id: string; username: string; role: string; name: string }): string {
   const payload: SessionPayload = {
     userId: user.id,
     username: user.username,
     role: user.role,
     name: user.name,
   }
-  const encoded = Buffer.from(JSON.stringify(payload)).toString('base64url')
-  const cookieStore = await cookies()
-  cookieStore.set(SESSION_COOKIE, encoded, {
+  return Buffer.from(JSON.stringify(payload)).toString('base64url')
+}
+
+export function setSessionCookie(response: NextResponse, encoded: string) {
+  response.cookies.set(SESSION_COOKIE, encoded, {
     httpOnly: true,
     sameSite: 'lax',
     path: '/',
     maxAge: SESSION_MAX_AGE,
     secure: process.env.NODE_ENV === 'production',
   })
+  return response
 }
 
-export async function destroySession() {
-  const cookieStore = await cookies()
-  cookieStore.delete(SESSION_COOKIE)
+export function destroySession(response: NextResponse) {
+  response.cookies.delete(SESSION_COOKIE)
+  return response
 }
 
 export async function getSession(): Promise<SessionPayload | null> {

@@ -265,14 +265,14 @@ export default function AnalyticsPage() {
     setLoading(true)
     setError(null)
     try {
-      // 1. Fetch merged transactions (both database and local localStorage)
+      // 1. Fetch all transactions from the shared database
       const txData = await fetchTransactions()
       const allTx = (txData?.transactions || []) as any[]
 
-      // 2. Extract persons from transactions to ensure we have parties even if API fails or for local transactions
-      const localPersons = Array.from(new Set(allTx.map(tx => tx.person?.trim()).filter(Boolean))) as string[]
-      const localParties = localPersons.map((name, index) => ({
-        id: `local-party-${index}-${name}`,
+      // 2. Extract persons from transactions for the party dropdown
+      const txPersons = Array.from(new Set(allTx.map(tx => tx.person?.trim()).filter(Boolean))) as string[]
+      const txParties = txPersons.map((name, index) => ({
+        id: `tx-party-${index}-${name}`,
         name,
         type: 'person'
       }))
@@ -285,15 +285,15 @@ export default function AnalyticsPage() {
           const apiParties = partiesJson.parties || []
           
           const mergedPartiesMap = new Map<string, Party>()
-          localParties.forEach(p => mergedPartiesMap.set(p.name.toLowerCase(), p))
+          txParties.forEach(p => mergedPartiesMap.set(p.name.toLowerCase(), p))
           apiParties.forEach((p: Party) => mergedPartiesMap.set(p.name.toLowerCase(), p))
           
           setParties(Array.from(mergedPartiesMap.values()).sort((a, b) => a.name.localeCompare(b.name)))
         } else {
-          setParties(localParties.sort((a, b) => a.name.localeCompare(b.name)))
+          setParties(txParties.sort((a, b) => a.name.localeCompare(b.name)))
         }
       } catch {
-        setParties(localParties.sort((a, b) => a.name.localeCompare(b.name)))
+        setParties(txParties.sort((a, b) => a.name.localeCompare(b.name)))
       }
 
       // 3. Try to fetch analytics from API
@@ -307,13 +307,8 @@ export default function AnalyticsPage() {
         // Silently catch and use client-side computation
       }
 
-      // If analytics API failed or returned empty arrays (fallback mode),
-      // or if we have local transactions, we should compute or merge them.
-      // Computing fully on client-side from the merged transactions list is the safest
-      // and most accurate way to reflect local transactions!
-      const hasLocalTransactions = allTx.some(tx => tx.id.startsWith('local-'))
-      
-      if (!analyticsData || analyticsData.typeSummary.length === 0 || hasLocalTransactions) {
+      // Use API analytics data (shared database serves all users the same data)
+      if (!analyticsData || analyticsData.typeSummary.length === 0) {
         const computed = computeAnalyticsFromTransactions(allTx, range)
         setData(computed)
       } else {
@@ -331,7 +326,7 @@ export default function AnalyticsPage() {
     setLedgerLoading(true)
     setLedgerError(null)
     try {
-      // 1. Fetch merged transactions
+      // 1. Fetch all transactions from shared database
       const txData = await fetchTransactions()
       const allTx = (txData?.transactions || []) as any[]
 
@@ -346,9 +341,7 @@ export default function AnalyticsPage() {
         // Silently catch and use client-side computation
       }
 
-      const hasLocalTransactions = allTx.some(tx => tx.id.startsWith('local-'))
-
-      if (!ledgerJson || ledgerJson.transactions.length === 0 || hasLocalTransactions) {
+      if (!ledgerJson || ledgerJson.transactions.length === 0) {
         const computed = computeLedgerFromTransactions(allTx, personName, range)
         setLedgerData(computed)
       } else {

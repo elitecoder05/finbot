@@ -48,17 +48,22 @@ export function TopBar() {
       setOpen(false)
       setSwitcherOpen(false)
       try {
-        await fetch('/api/auth/switch', {
+        const res = await fetch('/api/auth/switch', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ role }),
         })
+        if (!res.ok) {
+          console.error('Role switch failed:', res.statusText)
+          return
+        }
         await refresh()
+        router.refresh()
       } catch (err) {
         console.error('Role switch failed:', err)
       }
     },
-    [refresh]
+    [refresh, router]
   )
 
   const handleLogout = useCallback(async () => {
@@ -69,6 +74,11 @@ export function TopBar() {
   const navigate = (href: string) => {
     setOpen(false)
     router.push(href)
+  }
+
+  const closeAll = () => {
+    setOpen(false)
+    setSwitcherOpen(false)
   }
 
   if (!user) return null
@@ -106,14 +116,10 @@ export function TopBar() {
 
           {open && (
             <>
-              {/* Backdrop */}
-              <div className="fixed inset-0 z-40" onClick={() => { setOpen(false); setSwitcherOpen(false) }} />
-
               <div
-                className="absolute right-0 top-11 z-50 w-52 overflow-hidden rounded-lg border bg-white shadow-xl"
+                className="absolute right-0 top-11 z-50 w-52 rounded-lg border bg-white shadow-xl"
                 style={{ borderColor: '#e5e7eb' }}
               >
-                {/* Navigation items */}
                 {NAV_ITEMS.map((item) => {
                   const Icon = item.icon
                   return (
@@ -130,59 +136,51 @@ export function TopBar() {
                   )
                 })}
 
-                {/* Divider */}
                 <div className="my-1 border-t" style={{ borderColor: '#f3f4f6' }} />
 
-                {/* Switch User */}
-                <div className="relative">
-                  <button
-                    type="button"
-                    onClick={() => setSwitcherOpen((v) => !v)}
-                    className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left text-sm transition-colors"
-                    style={{ color: '#374151' }}
-                  >
-                    <div className="flex items-center gap-3">
-                      <div
-                        className="flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-bold text-white"
-                        style={{ backgroundColor: roleColor(user.role) }}
-                      >
-                        {roleInitials(user.name)}
-                      </div>
-                      Switch User
-                    </div>
-                    <ChevronRight size={14} style={{ color: '#9ca3af' }} />
-                  </button>
-
-                  {switcherOpen && (
+                <button
+                  type="button"
+                  onClick={() => setSwitcherOpen((v) => !v)}
+                  className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left text-sm transition-colors"
+                  style={{ color: '#374151' }}
+                >
+                  <div className="flex items-center gap-3">
                     <div
-                      className="absolute right-full top-0 mr-1 w-40 overflow-hidden rounded-lg border bg-white shadow-xl"
-                      style={{ borderColor: '#e5e7eb' }}
+                      className="flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-bold text-white"
+                      style={{ backgroundColor: roleColor(user.role) }}
                     >
-                      {USERS.map((u) => (
-                        <button
-                          key={u.role}
-                          type="button"
-                          onClick={() => handleRoleSwitch(u.role)}
-                          className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm transition-colors"
-                          style={{ color: '#374151' }}
-                        >
-                          <div
-                            className="flex h-6 w-6 items-center justify-center rounded-full text-[10px] font-bold text-white shrink-0"
-                            style={{ backgroundColor: roleColor(u.role) }}
-                          >
-                            {u.initials}
-                          </div>
-                          <span className="flex-1">{u.label}</span>
-                          {user.role === u.role && (
-                            <span style={{ color: '#16a34a', fontSize: 10 }}>✓</span>
-                          )}
-                        </button>
-                      ))}
+                      {roleInitials(user.name)}
                     </div>
-                  )}
-                </div>
+                    Switch User
+                  </div>
+                  <ChevronRight size={14} style={{ color: '#9ca3af' }} />
+                </button>
 
-                {/* Logout */}
+                {switcherOpen && (
+                  <div className="border-t" style={{ borderColor: '#f3f4f6' }}>
+                    {USERS.map((u) => (
+                      <button
+                        key={u.role}
+                        type="button"
+                        onClick={() => handleRoleSwitch(u.role)}
+                        className="flex w-full items-center gap-2 px-4 py-2.5 text-left text-sm transition-colors"
+                        style={{ color: '#374151' }}
+                      >
+                        <div
+                          className="flex h-6 w-6 items-center justify-center rounded-full text-[10px] font-bold text-white shrink-0"
+                          style={{ backgroundColor: roleColor(u.role) }}
+                        >
+                          {u.initials}
+                        </div>
+                        <span className="flex-1">{u.label}</span>
+                        {user.role === u.role && (
+                          <span style={{ color: '#16a34a', fontSize: 10 }}>✓</span>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                )}
+
                 <div className="border-t" style={{ borderColor: '#f3f4f6' }}>
                   <button
                     type="button"
@@ -195,6 +193,8 @@ export function TopBar() {
                   </button>
                 </div>
               </div>
+
+              <div className="fixed inset-0 z-40" onClick={closeAll} />
             </>
           )}
         </div>
