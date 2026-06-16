@@ -1,12 +1,20 @@
 import { PrismaClient } from '@prisma/client'
+import { PrismaLibSql } from '@prisma/adapter-libsql'
 
 declare global {
   // eslint-disable-next-line no-var
   var prisma: PrismaClient | undefined
 }
 
-// Prevent multiple instances of Prisma Client in development
-export const prisma = global.prisma || new PrismaClient()
+const databaseUrl = process.env.DATABASE_URL!
+
+const adapter = new PrismaLibSql({ url: databaseUrl })
+
+export const prisma =
+  global.prisma ||
+  new PrismaClient({
+    adapter,
+  })
 
 if (process.env.NODE_ENV !== 'production') {
   global.prisma = prisma
