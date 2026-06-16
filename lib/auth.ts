@@ -114,5 +114,31 @@ export async function requireSession(): Promise<SessionPayload> {
   if (!session) {
     throw new Error('Unauthorized')
   }
+
+  if (session.userId.startsWith('default-')) {
+    const username = session.userId.slice('default-'.length)
+    const dbUser = await prisma.user.findUnique({
+      where: { username },
+      select: { id: true, username: true, role: true, name: true },
+    }).catch(() => null)
+
+    if (dbUser) {
+      const cookieStore = await cookies()
+      cookieStore.set(SESSION_COOKIE, encodeSession(dbUser), {
+        httpOnly: true,
+        sameSite: 'lax',
+        path: '/',
+        maxAge: SESSION_MAX_AGE,
+        secure: process.env.NODE_ENV === 'production',
+      })
+      return {
+        userId: dbUser.id,
+        username: dbUser.username,
+        role: dbUser.role,
+        name: dbUser.name,
+      }
+    }
+  }
+
   return session
 }

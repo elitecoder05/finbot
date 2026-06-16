@@ -102,15 +102,6 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Invalid date' }, { status: 400 })
     }
 
-    if (session.userId.startsWith('default-')) {
-      return NextResponse.json(
-        {
-          error: 'Transactions are unavailable in fallback auth mode. Please sign in with a database-backed account.',
-        },
-        { status: 503 }
-      )
-    }
-
     const transaction = await prisma.transaction.create({
       data: {
         transactionType: transactionType as TransactionType,
