@@ -111,7 +111,7 @@ export async function findUserForLogin(username: string, password: string) {
 
 export async function requireSession(): Promise<SessionPayload> {
   const session = await getSession()
-  if (!session) {
+  if (!session || !session.userId) {
     throw new Error('Unauthorized')
   }
 

@@ -1,5 +1,6 @@
 import { PrismaClient } from '@prisma/client'
 import { PrismaLibSql } from '@prisma/adapter-libsql'
+import 'dotenv/config'
 
 declare global {
   // eslint-disable-next-line no-var

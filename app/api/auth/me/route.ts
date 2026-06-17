@@ -5,7 +5,7 @@ import { getSession } from '@/lib/auth'
 export async function GET() {
   try {
     const session = await getSession()
-    if (!session) {
+    if (!session || !session.userId) {
       return NextResponse.json({ user: null })
     }
 

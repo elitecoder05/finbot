@@ -1,9 +1,11 @@
 import { PrismaClient } from '@prisma/client'
 import { PrismaLibSql } from '@prisma/adapter-libsql'
 import bcrypt from 'bcryptjs'
+import 'dotenv/config'
 
 const adapter = new PrismaLibSql({
-  url: 'file:./prisma/dev.db',
+  url: process.env.DATABASE_URL || process.env.TURSO_DATABASE_URL!,
+  ...(process.env.TURSO_AUTH_TOKEN ? { authToken: process.env.TURSO_AUTH_TOKEN } : {}),
 })
 
 const prisma = new PrismaClient({ adapter })

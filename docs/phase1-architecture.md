@@ -432,7 +432,7 @@ Singleton table for application configuration.
 |-------|------|-------------|---------|-------------|
 | `id` | String | PK, default "singleton" | "singleton" | Always a single row |
 | `geminiApiKey` | String? | nullable | null | Gemini API key |
-| `modelName` | String | not null | "gemini-2.0-flash" | Gemini model name |
+| `modelName` | String | not null | "gemini-2.5-flash" | Gemini model name |
 | `temperature` | Float | not null | 0.1 | Model temperature (0-2) |
 | `confidenceThreshold` | Float | not null | 0.7 | Minimum confidence to auto-suggest |
 

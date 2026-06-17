@@ -74,7 +74,7 @@ export async function extractWithGemini(
 ): Promise<GeminiExtractionOutput> {
   const { rawText, regexResult, ruleResult, knownProducts, knownParties } = input
   const apiKey = options?.apiKey || process.env.GEMINI_API_KEY
-  const modelName = process.env.AI_MODEL || 'gemini-2.0-flash'
+  const modelName = process.env.AI_MODEL || 'gemini-2.5-flash'
   const temperature = parseFloat(process.env.AI_TEMPERATURE || '0.1')
 
   if (!apiKey) {

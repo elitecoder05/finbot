@@ -30,7 +30,7 @@ export async function POST(request: Request) {
         errors: result.validation?.errors ?? [],
         confidence: result.validation?.confidence ?? result.extraction?.confidence ?? 0,
       },
-      modelUsed: process.env.AI_MODEL || 'gemini-2.0-flash',
+      modelUsed: process.env.AI_MODEL || 'gemini-2.5-flash',
     })
   } catch (error) {
     console.error('/api/extract error:', error)
